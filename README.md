@@ -7,4 +7,7 @@
 - [ ] Syntax error detection (e.g. 5++4)
 
 ## TODO for 2.1
-- [ ] Basic GUI in WPF
+- [x] Basic GUI in WPF
+- [ ] Add Plotting Lib
+- [ ] Tie GUI Project (C#) into F# Project
+- [ ] Functional UI
