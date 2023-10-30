@@ -20,16 +20,22 @@
 
         <!--Topbar Content-->
         <Menu Grid.Row="0">
-            <MenuItem Header="File"></MenuItem>
-            <MenuItem Header="Edit"></MenuItem>
+            <MenuItem Header="_Application">
+
+                <MenuItem Header="_Execute" Click="Execute_Button_Click"></MenuItem>
+                <MenuItem Header="_Clear" Click="Clear_Button_Click"></MenuItem>
+                <MenuItem Header="_Exit" Click="Quit_Button_Click"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="Help" Click="ToggleHelpMessage"></MenuItem>
         </Menu>
+
 
         <!--Main Content-->
         <Grid Margin="20 10" Grid.Row="1" Grid.Column="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition MaxWidth="400"></ColumnDefinition>
-                <ColumnDefinition Width="1"></ColumnDefinition>
                 <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition Width="1"></ColumnDefinition>
+                <ColumnDefinition MaxWidth="400"></ColumnDefinition>
             </Grid.ColumnDefinitions>
 
 
@@ -90,6 +96,7 @@
                     <Rectangle 
          Fill="AliceBlue" Stroke="Black" Grid.Row="1"></Rectangle>
 
+                    <WpfPlot x:Name="WpfPlot1" Grid.Row="1"/>
                 </Grid>
 
 
@@ -156,6 +163,7 @@
                 </Grid>
 
                 <Button Grid.Row="2" 
+                        Click="Quit_Button_Click"
                         Width="110"
                         Height="30"
                         HorizontalAlignment="Right" 

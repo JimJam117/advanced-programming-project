@@ -1,8 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "WZKkgU7Hfen/KFiX60eqmsgzuSbhyFUMRLFjsUBtCBXlwyWneiTzzbawi82jkCpWRAEK1I4lSUb4ejG/sydIGQ==",
+  "dgSpecHash": "MD/KDPVVBeCYfV+doz1c5+KMrjyvmAv4KKycNvWftkpnZQ5RtxJpLBY7Bwy1CyLnit6s8fYAhcIwvEJuzLTzqw==",
   "success": true,
-  "projectFilePath": "C:\\Users\\james\\source\\repos\\Group-9-Project\\Group-9-Project\\Group-9-Project.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "C:\\Users\\james\\Documents\\GitHub\\advanced-programming-project\\Group-9-Project\\Group-9-Project.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\james\\.nuget\\packages\\microsoft.netcore.platforms\\3.1.4\\microsoft.netcore.platforms.3.1.4.nupkg.sha512",
+    "C:\\Users\\james\\.nuget\\packages\\microsoft.win32.systemevents\\4.7.0\\microsoft.win32.systemevents.4.7.0.nupkg.sha512",
+    "C:\\Users\\james\\.nuget\\packages\\scottplot\\4.1.68\\scottplot.4.1.68.nupkg.sha512",
+    "C:\\Users\\james\\.nuget\\packages\\scottplot.wpf\\4.1.68\\scottplot.wpf.4.1.68.nupkg.sha512",
+    "C:\\Users\\james\\.nuget\\packages\\system.drawing.common\\4.7.2\\system.drawing.common.4.7.2.nupkg.sha512",
+    "C:\\Users\\james\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512"
+  ],
   "logs": []
 }

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\james\\source\\repos\\Group-9-Project\\Group-9-Project\\Group-9-Project.csproj": {}
+    "C:\\Users\\james\\Documents\\GitHub\\advanced-programming-project\\Group-9-Project\\Group-9-Project.csproj": {}
   },
   "projects": {
-    "C:\\Users\\james\\source\\repos\\Group-9-Project\\Group-9-Project\\Group-9-Project.csproj": {
+    "C:\\Users\\james\\Documents\\GitHub\\advanced-programming-project\\Group-9-Project\\Group-9-Project.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\james\\source\\repos\\Group-9-Project\\Group-9-Project\\Group-9-Project.csproj",
+        "projectUniqueName": "C:\\Users\\james\\Documents\\GitHub\\advanced-programming-project\\Group-9-Project\\Group-9-Project.csproj",
         "projectName": "Group-9-Project",
-        "projectPath": "C:\\Users\\james\\source\\repos\\Group-9-Project\\Group-9-Project\\Group-9-Project.csproj",
+        "projectPath": "C:\\Users\\james\\Documents\\GitHub\\advanced-programming-project\\Group-9-Project\\Group-9-Project.csproj",
         "packagesPath": "C:\\Users\\james\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\james\\source\\repos\\Group-9-Project\\Group-9-Project\\obj\\",
+        "outputPath": "C:\\Users\\james\\Documents\\GitHub\\advanced-programming-project\\Group-9-Project\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\james\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -39,6 +39,12 @@
       "frameworks": {
         "net6.0-windows7.0": {
           "targetAlias": "net6.0-windows",
+          "dependencies": {
+            "ScottPlot.WPF": {
+              "target": "Package",
+              "version": "[4.1.68, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

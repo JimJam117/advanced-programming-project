@@ -10,6 +10,7 @@
 //------------------------------------------------------------------------------
 
 using Group_9_Project;
+using ScottPlot;
 using System;
 using System.Diagnostics;
 using System.Windows;
