@@ -1,5 +1,5 @@
 ## TODO for 1.1 
-- [ ] Negative Numbers
+- [x] Negative Numbers
 - [ ] Remainders (%)
 - [ ] Floating Point Numbers
 - [ ] Division By Zero Detection
