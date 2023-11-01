@@ -1,0 +1,11 @@
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\bin\Debug\net6.0-windows\FSharpCode.deps.json
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\bin\Debug\net6.0-windows\FSharpCode.dll
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\bin\Debug\net6.0-windows\FSharpCode.pdb
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\bin\Debug\net6.0-windows\FSharpCode.xml
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\obj\Debug\net6.0-windows\FSharpCode.fsproj.AssemblyReference.cache
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\obj\Debug\net6.0-windows\FSharpCode.AssemblyInfoInputs.cache
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\obj\Debug\net6.0-windows\FSharpCode.AssemblyInfo.fs
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\obj\Debug\net6.0-windows\FSharpCode.fsproj.CoreCompileInputs.cache
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\obj\Debug\net6.0-windows\FSharpCode.dll
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\obj\Debug\net6.0-windows\FSharpCode.xml
+C:\Users\james\Documents\GitHub\advanced-programming-project\FSharpCode\obj\Debug\net6.0-windows\FSharpCode.pdb

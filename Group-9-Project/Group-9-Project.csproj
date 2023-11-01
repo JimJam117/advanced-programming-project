@@ -13,4 +13,8 @@
     <PackageReference Include="ScottPlot.WPF" Version="4.1.68" />
   </ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\FSharpCode\FSharpCode.fsproj" />
+	</ItemGroup>
+
 </Project>

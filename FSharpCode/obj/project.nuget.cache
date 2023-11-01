@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "TbXritsSAuua9fs2PU5pnnMPEHgRRQFzAhthLJo8wMn/KlVsHpl95qGPwtGvFEmHR4PboGDQlxgBs3Ax+V4aZw==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\james\\Documents\\GitHub\\advanced-programming-project\\FSharpCode\\FSharpCode.fsproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\james\\.nuget\\packages\\fsharp.core\\7.0.400\\fsharp.core.7.0.400.nupkg.sha512"
+  ],
+  "logs": []
+}

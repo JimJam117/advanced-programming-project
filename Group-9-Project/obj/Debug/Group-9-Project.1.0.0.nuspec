@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>Group-9-Project</id>
+    <version>1.0.0</version>
+    <authors>Group-9-Project</authors>
+    <description>Package Description</description>
+    <dependencies>
+      <group targetFramework="net6.0-windows7.0">
+        <dependency id="ScottPlot.WPF" version="4.1.68" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <frameworkReferences>
+      <group targetFramework="net6.0-windows7.0">
+        <frameworkReference name="Microsoft.WindowsDesktop.App" />
+      </group>
+    </frameworkReferences>
+  </metadata>
+  <files>
+    <file src="C:\Users\james\Documents\GitHub\advanced-programming-project\Group-9-Project\bin\Debug\net6.0-windows\Group-9-Project.runtimeconfig.json" target="lib\net6.0-windows7.0\Group-9-Project.runtimeconfig.json" />
+    <file src="C:\Users\james\Documents\GitHub\advanced-programming-project\Group-9-Project\bin\Debug\net6.0-windows\Group-9-Project.dll" target="lib\net6.0-windows7.0\Group-9-Project.dll" />
+  </files>
+</package>

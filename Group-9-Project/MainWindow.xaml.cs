@@ -12,9 +12,12 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using FSharpCodeLib;
+
 
 namespace Group_9_Project
 {
+    
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -28,7 +31,8 @@ namespace Group_9_Project
         private void Execute_Button_Click(object sender, RoutedEventArgs e)
         {
             var text = tbInput.Text;
-            tbOutput.Text = text;
+            var output = lang.main_wpf(text);
+            tbOutput.Text = output.Item2.ToString();
             tbErrOutput.Text = "Syntax Error!";
 
 
@@ -44,6 +48,7 @@ namespace Group_9_Project
 
         private void Clear_Button_Click(object sender, RoutedEventArgs e)
         {
+            
             tbInput.Text = "";
             tbOutput.Text = "";
             tbErrOutput.Text = "...";
