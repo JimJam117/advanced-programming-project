@@ -69,5 +69,9 @@ namespace Group_9_Project
             MessageBox.Show("This is the help text for our application. Here you will find the BNF and valid symbols to use in the query.", "Help Text", MessageBoxButton.OK);
         }
 
+        private void tbInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            tbInputPlaceholder.Visibility = tbInput.Text != "" ? Visibility.Hidden : Visibility.Visible;
+        }
     }
 }

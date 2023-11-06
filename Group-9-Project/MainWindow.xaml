@@ -70,10 +70,12 @@
                         HorizontalAlignment="Stretch" 
                         TextWrapping="NoWrap" 
                         MaxLength="45" 
-                        Text="Type your query here..." 
+                        Text="" 
                         VerticalAlignment="Top" 
                         Height="29"
+                        TextChanged="tbInput_TextChanged" VerticalContentAlignment="Center"
                         />
+                    <Label x:Name="tbInputPlaceholder" Content="Type your query here..." Background="Transparent" Opacity="0.5" IsHitTestVisible="False" Grid.Row="1"/>
                     <Button 
                         Grid.Row="2"
                         Content="Execute" 
@@ -146,7 +148,7 @@
                         <RowDefinition></RowDefinition>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Console"></TextBlock>
+                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Error Console"></TextBlock>
                     <TextBox Name="tbErrOutput"  
                          IsReadOnly="True"    
                          TextWrapping="Wrap" 
@@ -173,6 +175,6 @@
             </Grid>
         </Grid>
     </Grid>
-     
+
 </Window>
 
