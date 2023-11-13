@@ -2,7 +2,7 @@
   "version": 3,
   "targets": {
     "net6.0-windows7.0": {
-      "FSharp.Core/7.0.400": {
+      "FSharp.Core/7.0.401": {
         "type": "package",
         "compile": {
           "lib/netstandard2.1/FSharp.Core.dll": {
@@ -169,15 +169,15 @@
     }
   },
   "libraries": {
-    "FSharp.Core/7.0.400": {
-      "sha512": "SZR1jcjcrdhjRObN/U16nI+RyvKBgg0zq8Pt2KAorDkvW0cXSjX4qKDNX+LpZaKZRA5QR9StHZ2mhT5VI/QSxw==",
+    "FSharp.Core/7.0.401": {
+      "sha512": "ZL16YHLJnkosMooVXjvJH0vGf7O4RSNtCpA/qw6OAHYxPCYSZRc5pKFTpDeDLdSWpOJDaZlveKcn42F0UDo77A==",
       "type": "package",
-      "path": "fsharp.core/7.0.400",
+      "path": "fsharp.core/7.0.401",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
-        "fsharp.core.7.0.400.nupkg.sha512",
+        "fsharp.core.7.0.401.nupkg.sha512",
         "fsharp.core.nuspec",
         "lib/netstandard2.0/FSharp.Core.dll",
         "lib/netstandard2.0/FSharp.Core.xml",
@@ -393,6 +393,7 @@
   },
   "projectFileDependencyGroups": {
     "net6.0-windows7.0": [
+      "FSharp.Core >= 7.0.401",
       "FSharpCode >= 1.0.0",
       "ScottPlot.WPF >= 4.1.68"
     ]
@@ -440,6 +441,10 @@
       "net6.0-windows7.0": {
         "targetAlias": "net6.0-windows",
         "dependencies": {
+          "FSharp.Core": {
+            "target": "Package",
+            "version": "[7.0.401, )"
+          },
           "ScottPlot.WPF": {
             "target": "Package",
             "version": "[4.1.68, )"

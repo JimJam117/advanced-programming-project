@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FSharp.Core" Version="7.0.401" />
     <PackageReference Include="ScottPlot.WPF" Version="4.1.68" />
   </ItemGroup>
 

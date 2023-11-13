@@ -148,20 +148,23 @@
                         <RowDefinition></RowDefinition>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Error Console"></TextBlock>
+                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Error / Debug Console"></TextBlock>
+                    <ScrollViewer
+                         MinHeight="150"
+                         Grid.Row="1"
+                        >
                     <TextBox Name="tbErrOutput"  
                          IsReadOnly="True"    
                          TextWrapping="Wrap" 
                          Text="..." 
-                         VerticalAlignment="Top" 
+                         VerticalAlignment="Stretch" 
                          HorizontalAlignment="Stretch"  
                          Margin="0,0,0,0"
-                         MinHeight="150"
-                         Grid.Row="1"
+
                          Background="Black"
                          Foreground="yellow"
                          />
-
+                     </ScrollViewer>
                 </Grid>
 
                 <Button Grid.Row="2" 
