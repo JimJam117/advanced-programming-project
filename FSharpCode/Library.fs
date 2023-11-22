@@ -163,7 +163,6 @@ module lang =
                           printSymTList tail
         | [] -> Console.WriteLine("]")
 
-   
 
     let rec main_wpf (input, init:bool, symTList:List<string*int>, output) : string*List<string*int> = 
 

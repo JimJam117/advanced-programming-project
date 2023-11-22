@@ -60,87 +60,41 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" 
-                               FontWeight="Bold" 
-                               Text="Query">
+                       FontWeight="Bold" 
+                       Text="Query">
                     </TextBlock>
 
                     <TextBox 
-                        Grid.Row="1"
-                        Name="tbInput" 
-                        HorizontalAlignment="Stretch" 
-                        TextWrapping="NoWrap" 
-                        MaxLength="45" 
-                        Text="" 
-                        VerticalAlignment="Top" 
-                        Height="29"
-                        TextChanged="tbInput_TextChanged" VerticalContentAlignment="Center"
-                        />
+                Grid.Row="1"
+                Name="tbInput" 
+                HorizontalAlignment="Stretch" 
+                TextWrapping="NoWrap" 
+                MaxLength="45" 
+                Text="" 
+                VerticalAlignment="Top" 
+                Height="29"
+                TextChanged="tbInput_TextChanged" VerticalContentAlignment="Center"
+                />
                     <Label x:Name="tbInputPlaceholder" Content="Type your query here..." Background="Transparent" Opacity="0.5" IsHitTestVisible="False" Grid.Row="1"/>
                     <Button 
-                        Grid.Row="2"
-                        Content="Execute" 
-                        HorizontalAlignment="Right" 
-                        Margin="0,0,0,0" 
-                        VerticalAlignment="Bottom" 
-                        Height="35" Width="84" 
-                        Click="Execute_Button_Click"/>
+                Grid.Row="2"
+                Content="Execute" 
+                HorizontalAlignment="Right" 
+                Margin="0,0,0,0" 
+                VerticalAlignment="Bottom" 
+                Height="35" Width="84" 
+                Click="Execute_Button_Click"/>
+                    <Button 
+                Grid.Row="2"
+                Content="Execute Polynomial (plotting)" 
+                HorizontalAlignment="left" 
+                Margin="0,0,0,0" 
+                VerticalAlignment="Bottom" 
+                Height="35" Width="170" 
+                Click="Execute_Plot_Button_Click"/>
                 </Grid>
 
 
-                <!--Plotting Container-->
-                <Grid Grid.Row="1" Margin="0 10 0 0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="20"></RowDefinition>
-                        <RowDefinition></RowDefinition>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Plotting"></TextBlock>
-                    <Rectangle 
-         Fill="AliceBlue" Stroke="Black" Grid.Row="1"></Rectangle>
-
-                    <WpfPlot x:Name="WpfPlot1" Grid.Row="1"/>
-                </Grid>
-
-
-            </Grid>
-
-            <Rectangle
-              Grid.Column="1"
-              Width="1"
-              Stroke="LightGray"
-              ></Rectangle>
-
-            <!--Right Side-->
-            <Grid Grid.Column="2" Margin="20 0 0 0">
-                <Grid.RowDefinitions>
-                    <!--Ouptut-->
-                    <RowDefinition Height="100"></RowDefinition>
-                    <!--Err Output-->
-                    <RowDefinition MinHeight="100"></RowDefinition>
-                    <RowDefinition Height="40"></RowDefinition>
-                </Grid.RowDefinitions>
-
-                <!--Output Box Grid-->
-                <Grid Grid.Row="0" Margin="0 10 0 0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="20"></RowDefinition>
-                        <RowDefinition></RowDefinition>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Output"></TextBlock>
-                    <TextBox Name="tbOutput"  
-                         IsReadOnly="True"    
-                         TextWrapping="Wrap" 
-                         Text="Output will display here..." 
-                         VerticalAlignment="Top" 
-                         HorizontalAlignment="Stretch"  
-                         Margin="0,0,0,0"
-                         MaxHeight="100"
-                         MinHeight="50"
-                         Grid.Row="1"
-                         />
-
-                </Grid>
                 <!--Err Output Box Grid-->
                 <Grid Grid.Row="1" Margin="0 10 0 0">
                     <Grid.RowDefinitions>
@@ -150,30 +104,94 @@
 
                     <TextBlock Grid.Row="0" FontWeight="Bold" Text="Error / Debug Console"></TextBlock>
                     <ScrollViewer
-                         MinHeight="150"
-                         Grid.Row="1"
-                        >
-                    <TextBox Name="tbErrOutput"  
-                         IsReadOnly="True"    
-                         TextWrapping="Wrap" 
-                         Text="..." 
-                         VerticalAlignment="Stretch" 
-                         HorizontalAlignment="Stretch"  
-                         Margin="0,0,0,0"
+ MinHeight="150"
+ Grid.Row="1"
+>
+                        <TextBox Name="tbErrOutput"  
+ IsReadOnly="True"    
+ TextWrapping="Wrap" 
+ Text="..." 
+ VerticalAlignment="Stretch" 
+ HorizontalAlignment="Stretch"  
+ Margin="0,0,0,0"
 
-                         Background="Black"
-                         Foreground="yellow"
-                         />
-                     </ScrollViewer>
+ Background="Black"
+ Foreground="yellow"
+ />
+                    </ScrollViewer>
                 </Grid>
 
-                <Button Grid.Row="2" 
-                        Click="Quit_Button_Click"
-                        Width="110"
-                        Height="30"
-                        HorizontalAlignment="Right" 
-                        VerticalAlignment="Bottom"
-                        Content="Close Application"></Button>
+
+            </Grid>
+
+            <Rectangle
+      Grid.Column="1"
+      Width="1"
+      Stroke="LightGray"
+      ></Rectangle>
+
+            <!--Right Side-->
+            <Grid Grid.Column="2" Margin="20 0 0 0">
+                <Grid.RowDefinitions>
+                    <!--Ouptut-->
+                    <RowDefinition Height="300"></RowDefinition>
+                    <!--Err Output-->
+                    <RowDefinition Height="40"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="0 10 0 0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="20"></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Output Mode"></TextBlock>
+
+                    <TabControl Grid.Row="1" SelectionChanged="TabControl_SelectionChanged" Name="tcTabs">
+                        <TabItem Header="Standard">
+                            <!--Output Box Grid-->
+
+
+                            <TextBlock Name="tbOutput"  
+                                       
+                                         TextWrapping="Wrap" 
+                                         Text="Output will display here..." 
+                                         VerticalAlignment="Top" 
+                                         HorizontalAlignment="Stretch"  
+                                         Margin="0,0,0,0"
+                                         />
+
+                            
+
+                        </TabItem>
+                        <TabItem Header="Plotting">
+
+                            <!--Plotting Container-->
+                            <Grid Grid.Row="1" Margin="0 10 0 0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="20"></RowDefinition>
+                                    <RowDefinition></RowDefinition>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" FontWeight="Bold" Text="Plotting"></TextBlock>
+                                
+
+                                <WpfPlot x:Name="WpfPlot1" Grid.Row="1"/>
+                            </Grid>
+
+                        </TabItem>
+                    </TabControl>
+
+                </Grid>
+                        
+
+
+                <Button Grid.Row="1" 
+                Click="Quit_Button_Click"
+                Width="110"
+                Height="30"
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Bottom"
+                Content="Close Application"></Button>
 
             </Grid>
         </Grid>

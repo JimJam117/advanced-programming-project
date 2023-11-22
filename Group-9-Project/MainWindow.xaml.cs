@@ -27,6 +27,13 @@ namespace Group_9_Project
         public Microsoft.FSharp.Collections.FSharpList<Tuple<string, int>> flist;
         public List<Tuple<string, int>> clist;
 
+        public enum CurrentMode {
+            STANDARD = 1,
+            PLOTTING = 2
+         }
+
+        public CurrentMode currentMode = CurrentMode.STANDARD;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -34,13 +41,17 @@ namespace Group_9_Project
             clist = new List<Tuple<string, int>>();
         }
 
-        private void Execute_Button_Click(object sender, RoutedEventArgs e)
+        private void Execute_Plot_Button_Click(object sender, RoutedEventArgs e)
         {
+          
+        }
+
+        private void executeStandard() {
             ConsoleWriter consoleWriter = new ConsoleWriter(tbErrOutput);
             Console.SetOut(consoleWriter);
 
             var text = tbInput.Text;
-            
+
             try
             {
                 Tuple<string, FSharpList<Tuple<string, int>>> output = lang.main_wpf(text, true, ListModule.OfSeq(clist), "");
@@ -54,17 +65,76 @@ namespace Group_9_Project
                 else { tbOutput.Text = ""; }
 
                 Console.WriteLine("SYMLIST: " + ListModule.OfSeq(clist));
-                
-            } catch(Exception exception) {
-                if (exception.Message == "Lexer error") {
+
+
+
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message == "Lexer error")
+                {
                     Console.WriteLine("Lexer error! Please make sure you have the correct symbols in the query.");
                 }
-                else if (exception.Message == "Parser error") {
+                else if (exception.Message == "Parser error")
+                {
                     Console.WriteLine("Parser error! Please make sure you have the correct symbols in the query.");
                 }
-                else {
+                else
+                {
                     Console.WriteLine(exception.Message);
                 }
+            }
+        }
+
+        private void executePlotting()
+        {
+            ConsoleWriter consoleWriter = new ConsoleWriter(tbErrOutput);
+            Console.SetOut(consoleWriter);
+
+            try
+            {
+                if (clist.Count() >= 2)
+                {
+                    Console.WriteLine("DEBUG - PLOTTING!");
+                    double[] dataX = new double[100];
+                    double[] dataY = new double[100];
+                    for (int x = 1; x < 100; x++)
+                    {
+                        dataX[x - 1] = x * clist.First().Item2;
+                        dataY[x - 1] = x * clist.Last().Item2;
+
+                    }
+
+                    WpfPlot1.Plot.AddScatter(dataX, dataY);
+                    WpfPlot1.Refresh();
+                }
+                else
+                {
+                    Console.WriteLine("Error - invalid polynomial");
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Polynomial Error:" + exception.Message);
+
+            }
+        }
+
+        private void Execute_Button_Click(object sender, RoutedEventArgs e)
+        {
+            switch (currentMode)
+            {
+                case CurrentMode.STANDARD:
+                    executeStandard();
+                    break;
+                case CurrentMode.PLOTTING:
+                    executePlotting();
+                    break;
+                default:
+                    ConsoleWriter consoleWriter = new ConsoleWriter(tbErrOutput);
+                    Console.SetOut(consoleWriter);
+                    Console.WriteLine("ERROR: MODE INVALID!");
+                    break;
             }
 
 
@@ -121,6 +191,21 @@ namespace Group_9_Project
         private void tbInput_TextChanged(object sender, TextChangedEventArgs e)
          {
             tbInputPlaceholder.Visibility = tbInput.Text != "" ? Visibility.Hidden : Visibility.Visible;
+        }
+
+        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            switch ((tcTabs.SelectedItem as TabItem).Header.ToString())
+            {
+                case "Standard":
+                    currentMode = CurrentMode.STANDARD; break;
+                case "Plotting":
+                    currentMode = CurrentMode.PLOTTING; break;
+
+                default:
+                    break;
+            }
+            
         }
     }
 }
