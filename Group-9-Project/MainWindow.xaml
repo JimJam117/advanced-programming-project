@@ -102,12 +102,23 @@
                         <RowDefinition></RowDefinition>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Error / Debug Console"></TextBlock>
-                    <ScrollViewer
+                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="System Output"></TextBlock>
+                    <TabControl Grid.Row="1">
+                        <TabItem Header="Symbol Table">
+                        <ScrollViewer
+                             MinHeight="150"
+                             Grid.Row="1">
+
+                                <DataGrid Name="dgSymlist"></DataGrid>
+                            
+                            </ScrollViewer>
+                        </TabItem>
+                        <TabItem Header="Debug Console">
+                            <ScrollViewer
  MinHeight="150"
  Grid.Row="1"
 >
-                        <TextBox Name="tbErrOutput"  
+                                <TextBox Name="tbErrOutput"  
  IsReadOnly="True"    
  TextWrapping="Wrap" 
  Text="..." 
@@ -118,7 +129,10 @@
  Background="Black"
  Foreground="yellow"
  />
-                    </ScrollViewer>
+                            </ScrollViewer>
+
+                        </TabItem>
+                    </TabControl>
                 </Grid>
 
 

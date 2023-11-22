@@ -137,6 +137,8 @@ namespace Group_9_Project
                     break;
             }
 
+            dgSymlist.ItemsSource = clist;
+
 
             //tbErrOutput.Text = "Syntax Error!";
 
