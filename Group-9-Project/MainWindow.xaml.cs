@@ -26,6 +26,7 @@ namespace Group_9_Project
     {
         public Microsoft.FSharp.Collections.FSharpList<Tuple<string, int>> flist;
         public List<Tuple<string, int>> clist;
+        public string BNF = "// Grammar in (E)BNF:\r\n<VA> ::= <varID> \"=\" <E>\r\n<E> ::= <T> <Eopt>\r\n<Eopt> ::= \"+\" <T> <Eopt> | \"-\" <T> <Eopt> | <empty>\r\n<T> ::= <NR> <Topt>\r\n<Topt> ::= \"*\" <NR> <Topt> | \"/\" <NR> <Topt> | <empty>\r\n<NR> ::= [\"Num\" | \"varVal\" ] <value> | \"(\" <E> \")\"\r\n<varID> ::= [a-z,A-Z]+  (* varVal is fetched from symbol table/list with key varID *)";
 
         public enum CurrentMode {
             STANDARD = 1,
@@ -39,6 +40,7 @@ namespace Group_9_Project
             InitializeComponent();
             tbErrOutput.Text = "...\n";
             clist = new List<Tuple<string, int>>();
+            tbBNF.Text = BNF;
         }
 
         private void Execute_Plot_Button_Click(object sender, RoutedEventArgs e)
