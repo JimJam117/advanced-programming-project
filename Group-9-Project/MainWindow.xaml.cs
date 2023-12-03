@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using FSharpCodeLib;
 using Microsoft.FSharp.Collections;
+using ScottPlot;
 using static Microsoft.FSharp.Core.ByRefKinds;
 
 namespace Group_9_Project
@@ -43,9 +44,10 @@ namespace Group_9_Project
             tbBNF.Text = BNF;
         }
 
-        private void Execute_Plot_Button_Click(object sender, RoutedEventArgs e)
+        private void Execute_Reset_Symtable_Click(object sender, RoutedEventArgs e)
         {
-          
+            this.clist = new List<Tuple<string, int>>();
+            dgSymlist.ItemsSource = clist;
         }
 
         private void executeStandard() {
@@ -54,8 +56,7 @@ namespace Group_9_Project
 
             var text = tbInput.Text;
 
-            try
-            {
+            try {
                 Tuple<string, FSharpList<Tuple<string, int>>> output = lang.main_wpf(text, true, ListModule.OfSeq(clist), "");
                 var outputStr = output.Item1; // output string
                 flist = output.Item2; // output sym list in F# syntax
@@ -88,42 +89,49 @@ namespace Group_9_Project
             }
         }
 
-        private void executePlotting()
-        {
+        private void executePlotting() {
             ConsoleWriter consoleWriter = new ConsoleWriter(tbErrOutput);
             Console.SetOut(consoleWriter);
 
-            try
-            {
-                if (clist.Count() >= 2)
-                {
-                    Console.WriteLine("DEBUG - PLOTTING!");
-                    double[] dataX = new double[100];
-                    double[] dataY = new double[100];
-                    for (int x = 1; x < 100; x++)
-                    {
-                        dataX[x - 1] = x * clist.First().Item2;
-                        dataY[x - 1] = x * clist.Last().Item2;
+            var text = tbInput.Text;
+            try {
+                List<Tuple<string, int>> plotCList = new List<Tuple<string, int>>();
 
+                Tuple<string, FSharpList<Tuple<string, int>>> output = lang.main_wpf(text, true, ListModule.OfSeq(plotCList), "");
+                var outputStr = output.Item1; // output string
+                flist = output.Item2; // output sym list in F# syntax
+                var ulist = addSymLists(plotCList, flist.ToList()); // union of current clist and new flist
+                plotCList = ulist.ToList(); // setting clist to union list
+
+                // update symlist
+                Console.WriteLine("PLOT SYMLIST: " + ListModule.OfSeq(plotCList));
+
+
+                if (plotCList.Count() >= 2) {
+                    Console.WriteLine("DEBUG - PLOTTING!");
+                    double[] dataX = new double[200];
+                    double[] dataY = new double[200];
+                    int i = 0;
+                    for (float x = -10f; x < 10f; x += 0.1f) {
+                        dataX[i] = x * plotCList.First().Item2;
+                        dataY[i] = x * plotCList.Last().Item2; // change this
+                        i++;
                     }
 
                     WpfPlot1.Plot.AddScatter(dataX, dataY);
                     WpfPlot1.Refresh();
                 }
-                else
-                {
+                else {
                     Console.WriteLine("Error - invalid polynomial");
                 }
             }
-            catch (Exception exception)
-            {
+            catch (Exception exception) {
                 Console.WriteLine("Polynomial Error:" + exception.Message);
 
             }
         }
 
-        private void Execute_Button_Click(object sender, RoutedEventArgs e)
-        {
+        private void Execute_Button_Click(object sender, RoutedEventArgs e) {
             switch (currentMode)
             {
                 case CurrentMode.STANDARD:
@@ -140,18 +148,6 @@ namespace Group_9_Project
             }
 
             dgSymlist.ItemsSource = clist;
-
-
-            //tbErrOutput.Text = "Syntax Error!";
-
-            //double[] dataX = new double[] { 1, 2, 3, 4, 5 };
-            //double[] dataY = new double[] { 1, 4, 9, 16, 25 };
-
-            //WpfPlot1.Plot.AddScatter(dataX, dataY);
-            //WpfPlot1.Plot.AddLine(1,1,5,5);
-            //WpfPlot1.Refresh();
-
-
         }
 
         private List<Tuple<string, int>> addSymLists(List<Tuple<string, int>> inputList1, List<Tuple<string, int>> inputList2) {
@@ -172,8 +168,7 @@ namespace Group_9_Project
         }
 
 
-        private void Clear_Button_Click(object sender, RoutedEventArgs e)
-        {
+        private void Clear_Button_Click(object sender, RoutedEventArgs e) {
             tbInput.Text = "";
             tbOutput.Text = "";
             tbErrOutput.Text = "...\n";

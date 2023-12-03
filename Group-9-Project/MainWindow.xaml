@@ -24,6 +24,7 @@
 
                 <MenuItem Header="_Execute" Click="Execute_Button_Click"></MenuItem>
                 <MenuItem Header="_Clear" Click="Clear_Button_Click"></MenuItem>
+                <MenuItem Header="_Reset Symbol Table" Click="Execute_Reset_Symtable_Click"></MenuItem>
                 <MenuItem Header="_Exit" Click="Quit_Button_Click"></MenuItem>
             </MenuItem>
             <MenuItem Header="Help" Click="ToggleHelpMessage"></MenuItem>

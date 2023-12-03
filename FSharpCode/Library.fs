@@ -16,7 +16,7 @@ open System
 module lang =
 
     type terminal = 
-        Add | Sub | Mul | Div | Lpar | Rpar | Equ | Vid of string | Num of int  // UPDATED
+        Add | Sub | Mul | Div | Lpar | Rpar | Equ | Vid of string | Num of int | Uminus | Uplus  // UPDATED
 
     let str2lst s = [for c in s -> c]
     let isblank c = System.Char.IsWhiteSpace c
@@ -38,23 +38,25 @@ module lang =
         | _ -> (iStr, vName)
 
     let lexer input = 
-        let rec scan input =
+        let rec scan(prev: char option) input =
             match input with
             | [] -> []
-            | '+'::tail -> Add :: scan tail
-            | '-'::tail -> Sub :: scan tail
-            | '*'::tail -> Mul :: scan tail
-            | '/'::tail -> Div :: scan tail
-            | '('::tail -> Lpar:: scan tail
-            | ')'::tail -> Rpar:: scan tail
-            | '='::tail -> Equ:: scan tail  // UPDATE
-            | c :: tail when isblank c -> scan tail
+            | '+'::tail when (prev = None || prev = Some '(' || prev = Some '+' || prev = Some '-' || prev = Some '*' || prev = Some '/') -> Uplus :: scan (Some '+') tail
+            | '+'::tail -> Add :: scan (Some '+') tail
+            | '-'::tail when (prev = None || prev = Some '(' || prev = Some '+' || prev = Some '-' || prev = Some '*' || prev = Some '/') -> Uminus :: scan (Some '-') tail //unary minus
+            | '-'::tail -> Sub :: scan (Some '-') tail
+            | '*'::tail -> Mul :: scan (Some '*') tail
+            | '/'::tail -> Div :: scan (Some '/') tail
+            | '('::tail -> Lpar:: scan (Some '(') tail
+            | ')'::tail -> Rpar:: scan (Some ')') tail
+            | '='::tail -> Equ:: scan (Some '=') tail  // UPDATE
+            | c :: tail when isblank c -> scan prev tail
             | c :: tail when isdigit c -> let (iStr, iVal) = scInt(tail, intVal c) 
-                                          Num iVal :: scan iStr
+                                          Num iVal :: scan (Some 'N') iStr
             | c :: tail when ischar c -> let (iStr, vName) = scChar(tail, c.ToString() ) // UPDATE
-                                         Vid vName :: scan iStr
+                                         Vid vName :: scan prev iStr
             | _ -> raise lexError
-        scan (str2lst input)
+        scan None (str2lst input)
 
     let getInputString() : string = 
         Console.Write("Enter an expression: ")
@@ -66,6 +68,7 @@ module lang =
     // <Eopt>     ::= "+" <T> <Eopt> | "-" <T> <Eopt> | <empty>
     // <T>        ::= <NR> <Topt>
     // <Topt>     ::= "*" <NR> <Topt> | "/" <NR> <Topt> | <empty>
+    // <Popt>     ::= "+" | "-"
     // <NR>       ::= ["Num" | "varVal" ] <value> | "(" <E> ")"
     // <varID>    ::= [a-z,A-Z]+     (* varVal is fetched from symbol table/list with key varID *)
 
@@ -84,6 +87,8 @@ module lang =
             | _ -> tList
         and NR tList =
             match tList with 
+            | Uplus :: tail -> NR tail  // Handle unary plus
+            | Uminus :: tail -> NR tail  // unary minus
             | Num value :: tail -> tail
             | Vid vName :: tail -> tail
             | Lpar :: tail -> match E tail with 
@@ -123,6 +128,10 @@ module lang =
             | _ -> (tList, ("", value))
         and NR tList =
             match tList with 
+            | Uplus :: tail -> NR tail  // Handle unary plus (no change in value)
+            | Uminus :: tail -> let (tLst, (vID, tval)) = NR tail
+                                (tLst, (vID, -1 * tval))
+                                
             | Num value :: tail -> (tail, ("", value))
             | Vid vName :: tail -> let res = searchVName vName symList
                                    if (fst res) then (tail, ("", (snd res)))
