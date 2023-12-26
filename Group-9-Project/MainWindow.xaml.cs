@@ -25,8 +25,10 @@ namespace Group_9_Project
     /// </summary>
     public partial class MainWindow : Window
     {
-        public Microsoft.FSharp.Collections.FSharpList<Tuple<string, int>> flist;
-        public List<Tuple<string, int>> clist;
+        
+
+        public Microsoft.FSharp.Collections.FSharpList<Tuple<string, lang.NumberType>> flist;
+        public List<Tuple<string, lang.NumberType>> clist;
         public string BNF = "// Grammar in (E)BNF:\r\n<VA> ::= <varID> \"=\" <E>\r\n<E> ::= <T> <Eopt>\r\n<Eopt> ::= \"+\" <T> <Eopt> | \"-\" <T> <Eopt> | <empty>\r\n<T> ::= <NR> <Topt>\r\n<Topt> ::= \"*\" <NR> <Topt> | \"/\" <NR> <Topt> | <empty>\r\n<NR> ::= [\"Num\" | \"varVal\" ] <value> | \"(\" <E> \")\"\r\n<varID> ::= [a-z,A-Z]+  (* varVal is fetched from symbol table/list with key varID *)";
 
         public enum CurrentMode {
@@ -40,13 +42,13 @@ namespace Group_9_Project
         {
             InitializeComponent();
             tbErrOutput.Text = "...\n";
-            clist = new List<Tuple<string, int>>();
+            clist = new List<Tuple<string, lang.NumberType>>();
             tbBNF.Text = BNF;
         }
 
         private void Execute_Reset_Symtable_Click(object sender, RoutedEventArgs e)
         {
-            this.clist = new List<Tuple<string, int>>();
+            this.clist = new List<Tuple<string, lang.NumberType>>();
             dgSymlist.ItemsSource = clist;
         }
 
@@ -57,7 +59,7 @@ namespace Group_9_Project
             var text = tbInput.Text;
 
             try {
-                Tuple<string, FSharpList<Tuple<string, int>>> output = lang.main_wpf(text, true, ListModule.OfSeq(clist), "");
+                Tuple<string, FSharpList<Tuple<string, lang.NumberType>>> output = lang.main_wpf(text, true, ListModule.OfSeq(clist), "");
                 var outputStr = output.Item1; // output string
                 flist = output.Item2; // output sym list in F# syntax
                 var ulist = addSymLists(clist, flist.ToList()); // union of current clist and new flist
@@ -95,9 +97,9 @@ namespace Group_9_Project
 
             var text = tbInput.Text;
             try {
-                List<Tuple<string, int>> plotCList = new List<Tuple<string, int>>();
+                List<Tuple<string, lang.NumberType>> plotCList = new List<Tuple<string, lang.NumberType>>();
 
-                Tuple<string, FSharpList<Tuple<string, int>>> output = lang.main_wpf(text, true, ListModule.OfSeq(plotCList), "");
+                Tuple<string, FSharpList<Tuple<string, lang.NumberType>>> output = lang.main_wpf(text, true, ListModule.OfSeq(plotCList), "");
                 var outputStr = output.Item1; // output string
                 flist = output.Item2; // output sym list in F# syntax
                 var ulist = addSymLists(plotCList, flist.ToList()); // union of current clist and new flist
@@ -113,8 +115,8 @@ namespace Group_9_Project
                     double[] dataY = new double[200];
                     int i = 0;
                     for (float x = -10f; x < 10f; x += 0.1f) {
-                        dataX[i] = x * plotCList.First().Item2;
-                        dataY[i] = x * plotCList.Last().Item2; // change this
+                       dataX[i] = x * plotCList.First().Item2;
+                       dataY[i] = x * plotCList.Last().Item2; // change this
                         i++;
                     }
 
@@ -150,8 +152,8 @@ namespace Group_9_Project
             dgSymlist.ItemsSource = clist;
         }
 
-        private List<Tuple<string, int>> addSymLists(List<Tuple<string, int>> inputList1, List<Tuple<string, int>> inputList2) {
-            List<Tuple<string, int>> newList = inputList1;
+        private List<Tuple<string, lang.NumberType>> addSymLists(List<Tuple<string, lang.NumberType>> inputList1, List<Tuple<string, lang.NumberType>> inputList2) {
+            List<Tuple<string, lang.NumberType>> newList = inputList1;
             foreach (var tuple in inputList2)
             {
                 if (!newList.Exists(x => x.Item1 == tuple.Item1))

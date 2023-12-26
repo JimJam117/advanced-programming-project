@@ -15,49 +15,173 @@ open System
 
 module lang =
 
-    type terminal = 
-        Add | Sub | Mul | Div | Lpar | Rpar | Equ | Vid of string | Num of int | Uminus | Uplus  // UPDATED
+    type public NumberType =
+    | NT_INT of int
+    | NT_FLOAT of float
+    with
+        static member Pow (f1:NumberType, f2:NumberType) =
+                match f1, f2 with
+                | NT_INT x, NT_INT y -> NT_INT (int (float x ** y))
+                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x ** y)
+                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x ** y)
+                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x ** float y)
 
-    let str2lst s = [for c in s -> c]
-    let isblank c = System.Char.IsWhiteSpace c
-    let isdigit c = System.Char.IsDigit c
-    let ischar c = System.Char.IsLetter c // UPDATE
+        static member (+) (f1:NumberType, f2:NumberType) =
+                match f1, f2 with
+                | NT_INT x, NT_INT y -> NT_INT (x + y)
+                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x + y)
+                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x + y)
+                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x + float y)
+
+
+        static member (-) (f1:NumberType, f2:NumberType) =
+                match f1, f2 with
+                | NT_INT x, NT_INT y -> NT_INT (x - y)
+                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x - y)
+                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x - y)
+                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x - float y)
+
+
+        static member (*) (f1:NumberType, f2:NumberType) =
+                match f1, f2 with
+                | NT_INT x, NT_INT y -> NT_INT (x * y)
+                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x * y)
+                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x * y)
+                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x * float y)
+
+
+        static member (/) (f1:NumberType, f2:NumberType) =
+                match f1, f2 with
+                | NT_INT x, NT_INT y -> NT_INT (x / y)
+                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x / y)
+                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x / y)
+                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x / float y)
+
+        static member (%) (f1:NumberType, f2:NumberType) =
+                match f1, f2 with
+                | NT_INT x, NT_INT y -> NT_INT (x % y)
+                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x % y)
+                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x % y)
+                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x % float y)
+
+        static member (~-) (f1:NumberType) =
+                match f1 with
+                | NT_INT x -> NT_INT (-x)
+                | NT_FLOAT x -> NT_FLOAT (-x)
+
+
+// list of token types - this is a I believe a discriminated union
+    type terminal = 
+        Add | Sub | Mul | Div | Pow | Mod | Lpar | Rpar | Equ | FloatNum of NumberType | Vid of string | IntNum of NumberType
+
+
+
+    let str2lst s = [for c in s -> c]           // simple function to turn a string into a list of chars
+    let isblank c = System.Char.IsWhiteSpace c  // simple function to check if char c is whitespace
+    let isdigit c = System.Char.IsDigit c       // simple function to check if char c is a digit
+    let isdot c =  c = '.'                      // simple function to check if char c is a dot
+    let isletter c = System.Char.IsLetter c       // simple function to check if char c is a letter
+    let intVal (c:char) = (int)((int)c - (int)'0') // convert char c into int
+    let floatVal (c:char) = (float)((float)c - (float)'0') // convert char c into int
+
+    // exception functions
     let lexError = System.Exception("Lexer error")
-    let intVal (c:char) = (int)((int)c - (int)'0')
     let parseError = System.Exception("Parser error")
+    let divisionByZeroError = System.Exception("Division by zero error!")
     let symError = System.Exception("No value associated to variable name")
 
-    let rec scInt(iStr, iVal) = 
-        match iStr with
-        c :: tail when isdigit c -> scInt(tail, 10*iVal+(intVal c))
-        | _ -> (iStr, iVal)
 
+
+    // Checks if the first number in a string list is a float
+    let isNextFloat(iStr) = 
+        let rec recursiveloop(iStr) = 
+            match iStr with
+             | c :: tail when isdot c -> (true)
+             | c :: tail when isdigit c -> recursiveloop(tail)
+             | _ -> (false)
+
+        recursiveloop(iStr)
+
+
+
+
+    // function to get the value of a string number as in integer
+    // for example, string '123' would be converted to int 123
+   
+    let rec scFloat(iStr, iVal, pastDotCount) = 
+        match iStr with
+            | c :: tail when isdigit c && pastDotCount <> 0 -> 
+                                        scFloat(tail, float iVal+(floatVal c / (float 10 ** pastDotCount)), pastDotCount + 1)
+
+            | c :: tail when isdot c -> scFloat(tail, float (iVal), 1)
+            | c :: tail when isdigit c -> scFloat(tail, float 10*iVal+(floatVal c), 0)
+            | _ -> (iStr, iVal) // return tuple of string and value
+
+    let rec scInt(iStr, iVal) = 
+        // this function works recursively, so we match the input string with two options:
+        //
+        // option 1: c::tail, where c is a digit:
+        // In this case, we re-call scInt with the tail, and 10*ival with the addition of c converted
+        // into an integer. We times the old ival by 10 to increase it's base, which makes sense, as
+        // we want to shift it up a decimal place and put the new value in the 'ones' position.
+        // E.g. if the string was 34, first round we get 3, then we want to 3*10 to get 30, + next number 4
+
+        // Option 2: _
+        // In the case where the pattern above is not matched - that is istr is not a string with the first
+        // char of the string being a digit - we at that point return the remaining istr along with the value
+        // we calculated up to that point, ival
+        match iStr with
+        | c :: tail when isdigit c -> scInt(tail, 10*iVal+(intVal c))
+        | _ -> (iStr, iVal) // return tuple of string and value
+
+
+
+    // The same as the above, but instead of for converting a string into an integer, we convert
+    // a string into a variable name. We check that the head 'c' is a letter, and if so add it onto
+    // the end of the variable name we have so far vName. Once 'c' is no longer a letter, we return the
+    // rest of the string + the vName in a tuple.
     let rec scChar(iStr, vName:string) =
         match iStr with
-        | c :: tail when ischar c -> scChar(tail,(vName + c.ToString()))
+        | c :: tail when isletter c -> scChar(tail,(vName + c.ToString()))
         | _ -> (iStr, vName)
 
+    // Next we have our lexer function. It is made up of a recursive sub-function called scan.
     let lexer input = 
-        let rec scan(prev: char option) input =
+        let rec scan input =
+            // 
             match input with
             | [] -> []
-            | '+'::tail when (prev = None || prev = Some '(' || prev = Some '+' || prev = Some '-' || prev = Some '*' || prev = Some '/') -> Uplus :: scan (Some '+') tail
-            | '+'::tail -> Add :: scan (Some '+') tail
-            | '-'::tail when (prev = None || prev = Some '(' || prev = Some '+' || prev = Some '-' || prev = Some '*' || prev = Some '/') -> Uminus :: scan (Some '-') tail //unary minus
-            | '-'::tail -> Sub :: scan (Some '-') tail
-            | '*'::tail -> Mul :: scan (Some '*') tail
-            | '/'::tail -> Div :: scan (Some '/') tail
-            | '('::tail -> Lpar:: scan (Some '(') tail
-            | ')'::tail -> Rpar:: scan (Some ')') tail
-            | '='::tail -> Equ:: scan (Some '=') tail  // UPDATE
-            | c :: tail when isblank c -> scan prev tail
-            | c :: tail when isdigit c -> let (iStr, iVal) = scInt(tail, intVal c) 
-                                          Num iVal :: scan (Some 'N') iStr
-            | c :: tail when ischar c -> let (iStr, vName) = scChar(tail, c.ToString() ) // UPDATE
-                                         Vid vName :: scan prev iStr
-            | _ -> raise lexError
-        scan None (str2lst input)
+            | '+'::tail -> Add :: scan tail 
+            | '-'::tail -> Sub :: scan tail
+            | '*'::tail -> Mul :: scan tail
+            | '/'::tail -> Div :: scan tail
+            | '%'::tail -> Mod :: scan tail
+            | '^'::tail -> Pow :: scan tail
+            | '('::tail -> Lpar:: scan tail
+            | ')'::tail -> Rpar:: scan tail
+            | '='::tail -> Equ:: scan tail  // UPDATE
+            | c :: tail when isblank c -> scan tail // in case where c is blank, just scan tail
 
+            // if c is a digit, we define tuple (iStr, iVal) and assign it to output
+            // of scInt function. We then return on the next line the value ival as a Num,
+            // (remember Num is of int so it needs an int in it's constructor) then scan istr,
+            // which is tail with the characters that make up ival removed
+            | c :: tail when isdigit c -> 
+                                        match isNextFloat (c :: tail) with
+                                        | false -> let (iStr, iVal)  = scInt(tail, intVal c) 
+                                                   IntNum (NT_INT iVal) :: scan iStr
+                                        | true -> let (iStr, iVal)  = scFloat(tail, intVal c, 0) 
+                                                  FloatNum (NT_FLOAT iVal) :: scan iStr
+
+            // same as above but for variable names
+            | c :: tail when isletter c -> let (iStr, vName) = scChar(tail, c.ToString()) // UPDATE
+                                           Vid vName :: scan iStr
+            | _ -> raise lexError
+    
+        scan (str2lst input) // run the sub-function with input string as list
+
+
+    // simple readline function
     let getInputString() : string = 
         Console.Write("Enter an expression: ")
         Console.ReadLine()
@@ -66,50 +190,98 @@ module lang =
     // <VA>       ::= <varID> "=" <E>
     // <E>        ::= <T> <Eopt>
     // <Eopt>     ::= "+" <T> <Eopt> | "-" <T> <Eopt> | <empty>
-    // <T>        ::= <NR> <Topt>
-    // <Topt>     ::= "*" <NR> <Topt> | "/" <NR> <Topt> | <empty>
-    // <Popt>     ::= "+" | "-"
-    // <NR>       ::= ["Num" | "varVal" ] <value> | "(" <E> ")"
+
+    // <T>        ::= <P> <Topt>
+    // <Topt>     ::= "*" <P> <Topt> | "/" <P> <Topt> | <empty>
+
+    // <P>        ::= <NR> <Popt>
+    // <Popt>     ::= "^" <NR> <Popt> | <empty>
+
+    // <NR>       ::= ["IntNum" | "FloatNum" | "varVal" ] <value> | "(" <E> ")"
     // <varID>    ::= [a-z,A-Z]+     (* varVal is fetched from symbol table/list with key varID *)
 
+
+
+    // I will try my best to explain this fucking mess
+
+    // First, let's look at the 'grammar' above. Think of T as the first layer, and E as the second.
+    // The 'opt' in Topt and Eopt are stages for operations. For T this is multiplication and division,
+    // for E this is addition and subtraction.
+
+    // tList is a list of tokens passed into the parser. 
     let parser tList = 
-        let rec E tList = (T >> Eopt) tList
+        // we define the recrusive function for E layer here.
+        // this >> operator is the composition operator, kinda like piping
+        let rec E tList = (T >> Eopt) tList 
         and Eopt tList = 
             match tList with
             | Add :: tail -> (T >> Eopt) tail
             | Sub :: tail -> (T >> Eopt) tail
             | _ -> tList
-        and T tList = (NR >> Topt) tList
+
+        // same as above for T, with NR being the input
+        and T tList = (P >> Topt) tList
         and Topt tList =
             match tList with
-            | Mul :: tail -> (NR >> Topt) tail
-            | Div :: tail -> (NR >> Topt) tail
+            | Mul :: tail -> (P >> Topt) tail
+            | Div :: tail -> (P >> Topt) tail
+            | Mod :: tail -> (P >> Topt) tail
             | _ -> tList
+
+        and P tList = (NR >> Popt) tList
+        and Popt tList =
+            match tList with
+            | Pow :: tail -> (NR >> Popt) tail
+            | _ -> tList
+
+        // NR simply matches either a number or variable name
+        // it also can match brackets
         and NR tList =
             match tList with 
-            | Uplus :: tail -> NR tail  // Handle unary plus
-            | Uminus :: tail -> NR tail  // unary minus
-            | Num value :: tail -> tail
+            | IntNum value :: tail -> tail
+            | Sub :: IntNum value :: tail -> tail
+            | FloatNum value :: tail -> tail
+            | Sub :: FloatNum value :: tail -> tail
             | Vid vName :: tail -> tail
+            | Sub :: Lpar :: tail -> match E tail with 
+                              | Rpar :: tail -> tail
+                              | _ -> raise parseError
             | Lpar :: tail -> match E tail with 
                               | Rpar :: tail -> tail
                               | _ -> raise parseError
             | _ -> raise parseError
+
+
+        // final sub-function, think VA stands for variable assignment.
+        // VA takes a token list and matches 
         let VA tList =  // UPDATE
             match tList with
             | Vid vName :: tail -> match tail with
                                    | Equ :: tail -> E tail // inner tail (from this line)
                                    | _ -> E tList  // Need tList to keep Vid vName
             | _ -> E tList
-        VA tList  // CHANGED FROM E tList
 
-    let rec searchVName vName (symList:List<string*int>) =
+        VA tList  // CHANGED FROM E tList
+    
+
+
+
+
+
+    let rec searchVName vName (symList:List<string*NumberType>) =
         match symList with
         | head :: tail -> if (fst head) = vName then (true, (snd head))
                           else searchVName vName tail
-        | _ -> (false, 0)
+        | _ -> (false, NT_INT 0)
 
-    let parseNeval tList (symList:List<string*int>) = // UPDATED
+
+
+
+
+    // Okay
+    let parseNeval tList (symList:List<string*NumberType>) = // UPDATED
+
+        // E section
         let rec E tList = (T >> Eopt) tList
         and Eopt (tList, (vID, value)) = 
             match tList with
@@ -118,29 +290,51 @@ module lang =
             | Sub :: tail -> let (tLst, (vID, tval)) = T tail
                              Eopt (tLst, (vID, value - tval))
             | _ -> (tList, ("", value))
-        and T tList = (NR >> Topt) tList
+
+        // T section
+        and T tList = (P >> Topt) tList
         and Topt (tList, (vID, value)) =
             match tList with
-            | Mul :: tail -> let (tLst, (vID, tval)) = NR tail
+            | Mul :: tail -> let (tLst, (vID, tval)) = P tail
                              Topt (tLst, (vID, value * tval))
-            | Div :: tail -> let (tLst, (vID, tval)) = NR tail
-                             Topt (tLst, (vID, value / tval))
+            | Div :: tail -> let (tLst, (vID, tval)) = P tail
+                             if (tval <> tval * NT_INT 0) then Topt (tLst, (vID, value / tval))
+                             else raise divisionByZeroError
+            | Mod :: tail -> let (tLst, (vID, tval)) = P tail
+                             if (tval <> tval * NT_INT 0) then Topt (tLst, (vID, value % tval))
+                             else raise divisionByZeroError
             | _ -> (tList, ("", value))
-        and NR tList =
+
+
+        // T section
+        and P tList = (NR >> Popt) tList
+        and Popt (tList, (vID, value)) =
+            match tList with
+            | Pow :: tail -> let (tLst, (vID, tval)) = NR tail
+                             Popt (tLst, (vID, value ** tval))
+            | _ -> (tList, ("", value))
+
+        // NR Section
+        and NR tList: terminal list * (string * NumberType) =
             match tList with 
-            | Uplus :: tail -> NR tail  // Handle unary plus (no change in value)
-            | Uminus :: tail -> let (tLst, (vID, tval)) = NR tail
-                                (tLst, (vID, -1 * tval))
-                                
-            | Num value :: tail -> (tail, ("", value))
+            | IntNum value :: tail -> (tail, ("", value))
+            | Sub :: IntNum value :: tail -> (tail, ("", -value))
+            | FloatNum value :: tail -> (tail, ("", value))
+            | Sub :: FloatNum value :: tail -> (tail, ("", -value))
             | Vid vName :: tail -> let res = searchVName vName symList
                                    if (fst res) then (tail, ("", (snd res)))
                                    else raise symError
+            | Sub :: Lpar :: tail -> let (tLst, (vID, tval)) = E tail
+                                     match tLst with 
+                                      | Rpar :: tail -> (tail, ("", -tval))
+                                      | _ -> raise parseError
             | Lpar :: tail -> let (tLst, (vID, tval)) = E tail
                               match tLst with 
                               | Rpar :: tail -> (tail, ("", tval))
                               | _ -> raise parseError
             | _ -> raise parseError
+
+        // VA similar to original parser VA
         let VA tList = 
             match tList with 
             | Vid vName :: tail -> match tail with 
@@ -164,7 +358,7 @@ module lang =
                           else [head]@(check4vid tail vName value) // copy original value
         | _ -> []
 
-    let rec printSymTList (sList:List<string*int>)  =
+    let rec printSymTList (sList:List<string*NumberType>)  =
         match sList with
         | head :: [] -> Console.Write("{0}", head)
                         printSymTList []
@@ -172,8 +366,34 @@ module lang =
                           printSymTList tail
         | [] -> Console.WriteLine("]")
 
+    let rec inpLoop (symTList:List<string*NumberType>) = 
+        Console.Write("Symbol Table = [")
+        let outSym = printSymTList symTList
+        let input = getInputString()
+        if input <> "" then
+            let oList = lexer input
+            let sList = printTList oList
+            let pList = parser oList  // pList is the remaining token list and should be empty
+            if not pList.IsEmpty then raise parseError // NOTE this update to avoid expressions like 3(2+3) that would return a value of 3 and have a nonempty token list ([Lpar Num 2 Add Num 3 Rpar], 3)
+            let Out = parseNeval oList symTList
+            let tempID = fst (snd Out)
+            let tempVal = snd (snd Out)
+            Console.WriteLine("Variable name = {0}", tempID)    // UPDATE
+            Console.WriteLine("Result = {0}", tempVal)          // UPDATED
+            // Check whether variable name was already in symTList and if so replace with new value
+            if tempID.Length > 0 then // update symbol table
+                if symTList.IsEmpty then 
+                    inpLoop (symTList@[tempID, tempVal])  // append new value if symbol table is empty
+                else 
+                    let res = check4vid symTList tempID tempVal // if tempID is already in symbol table replace its value
+                    let check = res.Equals(symTList)      // Check whether res is equal to the original (means no replacing was done)
+                    if check then inpLoop (symTList@[tempID, tempVal])  // if true pass old list with appended new tuple                 
+                    else inpLoop res   // if false pass updated res list with updated tuple
+            else inpLoop symTList 
+        else symTList
 
-    let rec main_wpf (input, init:bool, symTList:List<string*int>, output) : string*List<string*int> = 
+
+    let rec main_wpf (input, init:bool, symTList:List<string*NumberType>, output) : string*List<string*NumberType> = 
 
         if input <> null then
             let oList = lexer input
