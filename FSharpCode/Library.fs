@@ -15,7 +15,7 @@ open System
 
 module lang =
 
-    type public NumberType =
+    type NumberType =
     | NT_INT of int
     | NT_FLOAT of float
     with
@@ -70,7 +70,7 @@ module lang =
                 | NT_FLOAT x -> NT_FLOAT (-x)
 
 
-// list of token types - this is a I believe a discriminated union
+    // list of token types - this is a I believe a discriminated union
     type terminal = 
         Add | Sub | Mul | Div | Pow | Mod | Lpar | Rpar | Equ | FloatNum of NumberType | Vid of string | IntNum of NumberType
 
@@ -188,14 +188,18 @@ module lang =
 
     // Grammar in (E)BNF:
     // <VA>       ::= <varID> "=" <E>
+
     // <E>        ::= <T> <Eopt>
     // <Eopt>     ::= "+" <T> <Eopt> | "-" <T> <Eopt> | <empty>
 
     // <T>        ::= <P> <Topt>
     // <Topt>     ::= "*" <P> <Topt> | "/" <P> <Topt> | <empty>
 
-    // <P>        ::= <NR> <Popt>
+    // <P>        ::= <C> <Popt>
     // <Popt>     ::= "^" <NR> <Popt> | <empty>
+
+    // <C>        ::= <NR> <Copt>
+    // <Copt>     ::= "(" <E> ")" | <varID> | <empty>
 
     // <NR>       ::= ["IntNum" | "FloatNum" | "varVal" ] <value> | "(" <E> ")"
     // <varID>    ::= [a-z,A-Z]+     (* varVal is fetched from symbol table/list with key varID *)
@@ -228,10 +232,19 @@ module lang =
             | Mod :: tail -> (P >> Topt) tail
             | _ -> tList
 
-        and P tList = (NR >> Popt) tList
+        and P tList = (C >> Popt) tList
         and Popt tList =
             match tList with
-            | Pow :: tail -> (NR >> Popt) tail
+            | Pow :: tail -> (C >> Popt) tail
+            | _ -> tList
+
+        and C tList = (NR >> Copt) tList
+        and Copt tList =
+            match tList with
+            | Vid vName :: tail -> tail
+            | Lpar :: tail -> match E tail with 
+                              | Rpar :: tail -> tail
+                              | _ -> raise parseError
             | _ -> tList
 
         // NR simply matches either a number or variable name
@@ -307,11 +320,25 @@ module lang =
 
 
         // T section
-        and P tList = (NR >> Popt) tList
+        and P tList = (C >> Popt) tList
         and Popt (tList, (vID, value)) =
             match tList with
-            | Pow :: tail -> let (tLst, (vID, tval)) = NR tail
+            | Pow :: tail -> let (tLst, (vID, tval)) = C tail
                              Popt (tLst, (vID, value ** tval))
+            | _ -> (tList, ("", value))
+
+
+        // T section
+        and C tList = (NR >> Copt) tList
+        and Copt (tList, (vID, value)) =
+            match tList with
+            | Vid vName :: tail -> let res = searchVName vName symList
+                                   if (fst res) then (tail, (vID, value * (snd res)))
+                                   else raise symError
+            | Lpar :: tail -> let (tLst, (vID, tval)) = E tail
+                              match tLst with 
+                              | Rpar :: tail -> (tail,  (vID, value * tval))
+                              | _ -> raise parseError
             | _ -> (tList, ("", value))
 
         // NR Section

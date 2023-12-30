@@ -37,6 +37,7 @@ namespace Group_9_Project
          }
 
         public CurrentMode currentMode = CurrentMode.STANDARD;
+        public bool Xfirst = true;
 
         public MainWindow()
         {
@@ -115,8 +116,8 @@ namespace Group_9_Project
                     double[] dataY = new double[200];
                     int i = 0;
                     for (float x = -10f; x < 10f; x += 0.1f) {
-                       dataX[i] = x * plotCList.First().Item2;
-                       dataY[i] = x * plotCList.Last().Item2; // change this
+                        dataX[i] = x * 1;//plotCList.First().Item2;
+                        dataY[i] = x * 1;//plotCList.Last().Item2; // change this
                         i++;
                     }
 
@@ -194,19 +195,65 @@ namespace Group_9_Project
             tbInputPlaceholder.Visibility = tbInput.Text != "" ? Visibility.Hidden : Visibility.Visible;
         }
 
-        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            switch ((tcTabs.SelectedItem as TabItem).Header.ToString())
-            {
-                case "Standard":
-                    currentMode = CurrentMode.STANDARD; break;
-                case "Plotting":
-                    currentMode = CurrentMode.PLOTTING; break;
 
-                default:
-                    break;
+        private void switchMode(string str) {
+            if (str != null)
+            {
+                switch (str)
+                {
+                    case "Standard":
+                        currentMode = CurrentMode.STANDARD;
+                        tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(0);
+                        tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(0);
+                        break;
+                    case "Plotting":
+                        currentMode = CurrentMode.PLOTTING;
+                        tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(1);
+                        tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(1);
+                        break;
+
+                    default:
+                        break;
+                }
             }
-            
+        }
+
+        private void TabControl_Output_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var header = ((TabItem)tcOutputTabs.SelectedItem).Header;
+            string headerString = header.ToString() ?? "Standard";
+            if (header != null)
+            {
+                switchMode(str: headerString);
+            }
+        }
+
+        private void TabControl_Input_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var header = ((TabItem)tcInputTabs.SelectedItem).Header;
+            string headerString = header.ToString() ?? "Standard";
+            if (header != null)
+            {
+                switchMode(str: headerString);
+            }
+        }
+
+        private void Button_Switch_Xy_Click(object sender, RoutedEventArgs e)
+        {
+            Xfirst = !Xfirst;
+            if (Xfirst) { 
+                tbXyEquals.Text = "X = ";
+                tbXy.Text = "Y + ";
+            }
+            else {
+                tbXyEquals.Text = "Y = ";
+                tbXy.Text = "X + ";
+            }
+        }
+
+        private void Button_Execute_Plot_Click(object sender, RoutedEventArgs e)
+        {
+            Console.WriteLine("Wow");
         }
     }
 }
