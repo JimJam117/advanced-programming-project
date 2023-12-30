@@ -19,6 +19,16 @@ module lang =
     | NT_INT of int
     | NT_FLOAT of float
     with
+       static member getIntValue (f1:NumberType) =
+                match f1 with
+                | NT_INT x -> int x
+                | NT_FLOAT x -> int x
+
+       static member getFloatValue (f1:NumberType) =
+                match f1 with
+                | NT_INT x -> float x
+                | NT_FLOAT x -> float x
+
         static member Pow (f1:NumberType, f2:NumberType) =
                 match f1, f2 with
                 | NT_INT x, NT_INT y -> NT_INT (int (float x ** y))
@@ -89,6 +99,7 @@ module lang =
     let parseError = System.Exception("Parser error")
     let divisionByZeroError = System.Exception("Division by zero error!")
     let symError = System.Exception("No value associated to variable name")
+    let linearError = System.Exception("The coefficient cannot be 0.")
 
 
 
@@ -103,11 +114,8 @@ module lang =
         recursiveloop(iStr)
 
 
-
-
     // function to get the value of a string number as in integer
     // for example, string '123' would be converted to int 123
-   
     let rec scFloat(iStr, iVal, pastDotCount) = 
         match iStr with
             | c :: tail when isdigit c && pastDotCount <> 0 -> 
@@ -205,13 +213,6 @@ module lang =
     // <varID>    ::= [a-z,A-Z]+     (* varVal is fetched from symbol table/list with key varID *)
 
 
-
-    // I will try my best to explain this fucking mess
-
-    // First, let's look at the 'grammar' above. Think of T as the first layer, and E as the second.
-    // The 'opt' in Topt and Eopt are stages for operations. For T this is multiplication and division,
-    // for E this is addition and subtraction.
-
     // tList is a list of tokens passed into the parser. 
     let parser tList = 
         // we define the recrusive function for E layer here.
@@ -290,8 +291,7 @@ module lang =
 
 
 
-
-    // Okay
+    // Parse and evaluate
     let parseNeval tList (symList:List<string*NumberType>) = // UPDATED
 
         // E section
@@ -344,7 +344,7 @@ module lang =
         // NR Section
         and NR tList: terminal list * (string * NumberType) =
             match tList with 
-            | IntNum value :: tail -> (tail, ("", value))
+            | IntNum value :: tail -> (tail, ("", value))                                                        
             | Sub :: IntNum value :: tail -> (tail, ("", -value))
             | FloatNum value :: tail -> (tail, ("", value))
             | Sub :: FloatNum value :: tail -> (tail, ("", -value))
@@ -393,33 +393,6 @@ module lang =
                           printSymTList tail
         | [] -> Console.WriteLine("]")
 
-    let rec inpLoop (symTList:List<string*NumberType>) = 
-        Console.Write("Symbol Table = [")
-        let outSym = printSymTList symTList
-        let input = getInputString()
-        if input <> "" then
-            let oList = lexer input
-            let sList = printTList oList
-            let pList = parser oList  // pList is the remaining token list and should be empty
-            if not pList.IsEmpty then raise parseError // NOTE this update to avoid expressions like 3(2+3) that would return a value of 3 and have a nonempty token list ([Lpar Num 2 Add Num 3 Rpar], 3)
-            let Out = parseNeval oList symTList
-            let tempID = fst (snd Out)
-            let tempVal = snd (snd Out)
-            Console.WriteLine("Variable name = {0}", tempID)    // UPDATE
-            Console.WriteLine("Result = {0}", tempVal)          // UPDATED
-            // Check whether variable name was already in symTList and if so replace with new value
-            if tempID.Length > 0 then // update symbol table
-                if symTList.IsEmpty then 
-                    inpLoop (symTList@[tempID, tempVal])  // append new value if symbol table is empty
-                else 
-                    let res = check4vid symTList tempID tempVal // if tempID is already in symbol table replace its value
-                    let check = res.Equals(symTList)      // Check whether res is equal to the original (means no replacing was done)
-                    if check then inpLoop (symTList@[tempID, tempVal])  // if true pass old list with appended new tuple                 
-                    else inpLoop res   // if false pass updated res list with updated tuple
-            else inpLoop symTList 
-        else symTList
-
-
     let rec main_wpf (input, init:bool, symTList:List<string*NumberType>, output) : string*List<string*NumberType> = 
 
         if input <> null then
@@ -451,3 +424,64 @@ module lang =
         else 
             output,symTList
 
+
+    let rec solveGequation (input:string, init:bool, symTList:List<string*NumberType>, output) : string*List<string*NumberType> = 
+            if input <> null then
+                let oList = lexer input
+                let sList = printTList oList
+                let pList = parser oList  // pList is the remaining token list and should be empty
+                if not pList.IsEmpty then raise parseError // NOTE this update to avoid expressions like 3(2+3) that would return a value of 3 and have a nonempty token list ([Lpar Num 2 Add Num 3 Rpar], 3)
+                let Out = parseNeval oList symTList
+                let tempID = fst (snd Out)
+                let tempVal = snd (snd Out)
+
+                Console.WriteLine("Variable name = " + tempID.ToString() ) // UPDATE
+                Console.WriteLine("Result = {0}" + tempVal.ToString()  ) // UPDATED
+
+                // Check whether variable name was already in symTList and if so replace with new value
+                if tempID.Length > 0 then // update symbol table
+                    if symTList.IsEmpty then 
+                        solveGequation (null, false, symTList@[tempID, tempVal], tempVal)  // append new value if symbol table is empty
+                    else 
+                        let res = check4vid symTList tempID tempVal // if tempID is already in symbol table replace its value
+                        let check = res.Equals(symTList)      // Check whether res is equal to the original (means no replacing was done)
+                        if check then solveGequation (null, false, symTList@[tempID, tempVal], tempVal)  // if true pass old list with appended new tuple                 
+                        else solveGequation (null, false, res, tempVal)   // if false pass updated res list with updated tuple
+                else 
+                    if tempVal.ToString() = null then
+                        solveGequation (null, false, symTList, output)
+                    else
+                        solveGequation (null, false, symTList,  tempVal)
+            else
+
+                let parsedOutput = 
+                    match output with
+                    | NT_INT i -> float i
+                    | NT_FLOAT f -> f
+
+                string parsedOutput,symTList
+
+    // ax + b = c
+    // Function to find x:
+    let findXinLinearEq a b c =
+        // if the co-efficient a is 0, then we cannot map the linear function
+        if a = 0. then
+            None
+        else
+            Some ((c - b) / a)
+
+
+    // ax + b = c
+    let public graphingFunction (a:string) (b:string) (c:string) (symTList:List<string*NumberType>) = 
+        let ga = solveGequation(a, true, symTList, NT_INT 0)
+        let gb = solveGequation(b, true, symTList, NT_INT 0)
+        let gc = solveGequation(c, true, symTList, NT_INT 0)
+    
+        let fa = float (fst ga)
+        let fb = float (fst gb)
+        let fc = float (fst gc)
+
+        if fa = 0. then
+            raise linearError
+        else
+            ((fc - fb) / fa)
