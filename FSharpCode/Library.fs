@@ -485,3 +485,69 @@ module lang =
             raise linearError
         else
             ((fc - fb) / fa)
+
+    let runStandardTest (input:string) (expectedOutputString:string) (inputSymTList:List<string*NumberType>) (expectedSymTList:List<string*NumberType>): string*Boolean =
+        let res = solveGequation(input, true, inputSymTList, NT_INT 0)
+        if fst res <> expectedOutputString then 
+            ("Expected output does not match. Expected: '" + expectedOutputString + "' for input '" + input + "', Actual: '" + fst res + "'",false)
+        else 
+            if snd res <> expectedSymTList then
+                ("Expected symlist does not match",false)
+            else
+                ("Test passed! Input: " + input + ", Output: " + fst res,true)
+ 
+
+    let runGraphingTest (coef:string) (const1:string) (const2:string) (expectedXvalue:float) =
+        let ans = graphingFunction coef const1 const2 List.empty
+        let inputString = "'(" + coef + ")x + (" + const1 + ") = " + const2 + "'"
+        if ans <> expectedXvalue then
+            ("Expected x value does not match. Expected: '" + string expectedXvalue + "' for input " + inputString + ", Actual: '" + string ans + "'",false)
+        else
+            ("Test passed! Input: " + inputString + ", X value: " + string expectedXvalue,true)
+        
+    let runTests =
+        // Standard tests (first ones in report section 'Arithmetic expression testing'):
+        let test1 = runStandardTest "5 * 3 + (2 * 3 - 2)/ 2 + 6" "23" List.empty List.empty
+        let test2 = runStandardTest "9 - 3 - 2" "4" List.empty List.empty
+        let test3 = runStandardTest "10 / 3" "3" List.empty List.empty
+        let test4 = runStandardTest "10 / 3.0" "3.3333333333333335" List.empty List.empty
+        let test5 = runStandardTest "10 % 3" "1" List.empty List.empty
+        let test6 = runStandardTest "10 - -2" "12" List.empty List.empty
+        let test7 = runStandardTest "-2 + 10" "8" List.empty List.empty
+        let test8 = runStandardTest "3 * 5 ^(-1 + 3) - 2^2 * -3" "87" List.empty List.empty
+        let test9 = runStandardTest "-3 ^ 2" "9" List.empty List.empty
+        let test10 = runStandardTest "-7 % 3" "-1" List.empty List.empty
+        let test11 = runStandardTest "3 * 5 ^(-1 + 3) - 2^ -2 * -3" "75" List.empty List.empty
+        let test12 = runStandardTest "3 * 5 ^(-1 + 3) - 2.0 ^ -2 * -3" "75.75" List.empty List.empty
+        let test13 = runStandardTest "((( 3*2 - -2)))" "8" List.empty List.empty
+        let test14 = runStandardTest "-(( 3*5 - 2 * 3))" "-9" List.empty List.empty
+    
+        // second section: x = 3
+        let assignmentTest = runStandardTest "x = 3" "3" List.empty [("x", NT_INT 3)]
+        let xTest1 = runStandardTest "(2*x) -x^2 *5" "-39" [("x", NT_INT 3)] [("x", NT_INT 3)]
+        let xTest2 = runStandardTest "(2*x) -x^2 *5 / 2" "-16" [("x", NT_INT 3)] [("x", NT_INT 3)]
+        let xTest3 = runStandardTest "(2*x) -x^2 * (5 / 2)" "-12" [("x", NT_INT 3)] [("x", NT_INT 3)]
+        let xTest4 = runStandardTest "(2*x) -x^2 *5 / 2.0" "-16.5" [("x", NT_INT 3)] [("x", NT_INT 3)]
+        let xTest5 = runStandardTest "(2*x) -x^2 *5 % 2" "5" [("x", NT_INT 3)] [("x", NT_INT 3)]
+        let xTest6 = runStandardTest "(2*x) -x^2 * (5 % 2)" "-3" [("x", NT_INT 3)] [("x", NT_INT 3)]
+
+        /// graphing tests
+        let graphingTest1 = runGraphingTest "1" "2" "3" 1.
+        let graphingTest2 = runGraphingTest "2 * 3" "1" "13" 2.
+        let graphingTest3 = runGraphingTest "(2^2)" "10" "124" 28.5
+        let graphingTest4 = runGraphingTest "41 - 12" "3" "32" 1.
+
+        let tests = [test1; test2; test3; test4; test5; test6;
+        test7; test8; test9; test10; test11; test12; 
+        test13; test14; assignmentTest; xTest1; xTest2;
+        xTest3; xTest4; xTest5; xTest6; graphingTest1;
+        graphingTest2; graphingTest3; graphingTest4]
+
+        for test in tests do
+            match snd test with
+            | true -> Console.WriteLine("ok - " + fst test)
+            | false -> Console.WriteLine("FAILURE - " + fst test)
+        
+
+
+

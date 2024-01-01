@@ -117,7 +117,6 @@ namespace Group_9_Project
                 Console.WriteLine("SYMLIST: " + ListModule.OfSeq(clist));
 
 
-
             }
             catch (Exception exception)
             {
@@ -261,6 +260,15 @@ namespace Group_9_Project
 
             WpfPlot1.Plot.AddScatter(xpoints.ToArray(), ypoints.ToArray());
             WpfPlot1.Refresh();
+        }
+
+        private void Execute_Run_Tests_Click(object sender, RoutedEventArgs e)
+        {
+            ConsoleWriter consoleWriter = new ConsoleWriter(tbErrOutput);
+            Console.SetOut(consoleWriter);
+
+            var res = lang.runTests;
+
         }
     }
 }
