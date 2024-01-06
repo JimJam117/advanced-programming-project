@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 using System.Windows;
@@ -33,14 +34,17 @@ namespace Group_9_Project
 
         public Microsoft.FSharp.Collections.FSharpList<Tuple<string, lang.NumberType>> flist;
         public List<Tuple<string, lang.NumberType>> clist;
-        public string BNF = "// Grammar in (E)BNF:\r\n <VA> ::= <varID> \"=\" <E>\r\n\r\n<E> ::= <T> <Eopt>" +
+        public string BNF = "" +
+            "BNF:\r\n<VA> ::= <varID> \"=\" <E>\r\n\r\n<E> ::= <T> <Eopt>" +
             "\r\n<Eopt> ::= \"+\" <T> <Eopt> | \"-\" <T> <Eopt> | <empty>\r\n\r\n<T> ::= <P> <Topt>\r\n" +
-            "<Topt> ::= \"*\" <P> <Topt> | \"/\" <P> <Topt> | <empty>\r\n\r\n<P> ::= <C> <Popt>\r\n" +
-            "<Popt> ::= \"^\" <NR> <Popt> | <empty>\r\n\r\n<C> ::= <NR> <Copt>\r\n" +
-            "<Copt> ::= \"(\" <E> \")\" | <varID> | <empty>\r\n\r\n" +
-            "<NR> ::= [\"IntNum\" | \"FloatNum\" | \"varVal\" ] <value> | \"(\" <E> \")\"\r\n" +
-            "<varID> ::= [a-z,A-Z]+ \r\n\r\n(* varVal is fetched from symbol table/list with key varID *)\r\n";
 
+            "<Topt> ::= \"*\" <P> <Topt> | \"/\" <P> <Topt> | \"(\" <E> \")\" | <varID> | <empty>\r\n\r\n<P> ::= <NR> <Popt>\r\n" +
+            "<Popt> ::= \"^\" <NR> <Popt> | <empty>\r\n\r\n" +
+
+            "<NR> ::= \"-\"[\"IntNum\" | \"FloatNum\" | \"RatNum\" | \"varVal\" ] <value> | "+
+            "[\"IntNum\" | \"FloatNum\" | \"RatNum\" | \"varVal\" ] <value> | \"(\" <E> \")\" | \"-\"(\" <E> \")\"\r\n\r\n" +
+
+            "<varID> ::= [a-z,A-Z]+ \r\n(* varVal is fetched from symbol table/list with key varID *)\r\n";
 
         public enum CurrentMode {
             STANDARD = 1,
@@ -66,6 +70,26 @@ namespace Group_9_Project
             setDgSymList();
         }
 
+        private void handleInterpreterExceptions(Exception exception) {
+            if (exception.Message == "Lexer error")
+            {
+                var msg = "Please make sure you have the correct symbols in the query.";
+                MessageBox.Show("Exception: " + exception.Message + "\n" + msg, "Exception!", MessageBoxButton.OK, MessageBoxImage.Error);
+                Console.WriteLine(exception.Message + " - " + msg);
+            }
+            else if (exception.Message == "Parser error")
+            {
+                var msg = "Please make sure you have the correct symbols in the query.";
+                MessageBox.Show("Exception: " + exception.Message + "\n" + msg, "Exception!", MessageBoxButton.OK, MessageBoxImage.Error);
+                Console.WriteLine(exception.Message + " - " + msg);
+            }
+            else
+            {
+                MessageBox.Show(exception.Message, "Exception!", MessageBoxButton.OK, MessageBoxImage.Error);
+                Console.WriteLine(exception.Message);
+            }
+        }
+
         private void setDgSymList() {
             var symlist = new List<symListItem>();
             foreach (var item in clist)
@@ -73,11 +97,17 @@ namespace Group_9_Project
                 var item1 = item.Item1;
                 var item2 = item.Item2;
 
-                if (item2.IsNT_INT) {
+                if (item2.IsNT_INT)
+                {
                     int val = lang.NumberType.getIntValue(item2);
-                    symlist.Add(new symListItem(item.Item1, "Integer", val.ToString()));
+                    symlist.Add(new symListItem(item.Item1, "Integer", item2.ToString()));
                 }
-                else {
+                else if (item2.IsNT_RAT) {
+                    var val = lang.NumberType.getRatValue(item2);
+                    symlist.Add(new symListItem(item.Item1, "Rational", item2.ToString()));
+                }
+                else
+                {
                     double val = lang.NumberType.getFloatValue(item2);
                     symlist.Add(new symListItem(item.Item1, "Floating Point", val.ToString()));
                 }
@@ -120,24 +150,13 @@ namespace Group_9_Project
             }
             catch (Exception exception)
             {
-                if (exception.Message == "Lexer error")
-                {
-                    Console.WriteLine("Lexer error! Please make sure you have the correct symbols in the query.");
-                }
-                else if (exception.Message == "Parser error")
-                {
-                    Console.WriteLine("Parser error! Please make sure you have the correct symbols in the query.");
-                }
-                else
-                {
-                    Console.WriteLine(exception.Message);
-                }
+                handleInterpreterExceptions(exception);
             }
         }
 
         private void Execute_Button_Click(object sender, RoutedEventArgs e) {
-            executeStandard();
-            setDgSymList();
+                executeStandard();
+                setDgSymList();
         }
 
         private List<Tuple<string, lang.NumberType>> addSymLists(List<Tuple<string, lang.NumberType>> inputList1, List<Tuple<string, lang.NumberType>> inputList2) {
@@ -173,7 +192,7 @@ namespace Group_9_Project
 
         private void ToggleHelpMessage(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("This is the help text for our application. Here you will find the BNF and valid symbols to use in the query.", "Help Text", MessageBoxButton.OK);
+            MessageBox.Show("This is the help text for our application. Here you will find the BNF and valid symbols to use in the query.\n\nNumber Types:\nThere are 3 number types in this application - integers, floats and rationals. Integers are represented by whole numbers, floating points represented by a number with a decimal place, and finally rational numbers uing the backslash in a fraction (i.e. 2 / 3 is simply 2 divided by 3 as integers, but 2\\3 represents 2 thirds as a rational number.)\n\n" + BNF, "Help Text", MessageBoxButton.OK);
         }
 
         private void tbInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -244,22 +263,37 @@ namespace Group_9_Project
             var xpoints = new List<double>();
             var ypoints = new List<double>();
 
-            for (int i = -100; i < 100; i++)
+
+            try
             {
-                var j = lang.graphingFunction(coefInput, constInput, i.ToString(), ListModule.OfSeq(clist));
-                if (Xfirst)
+                for (int i = -100; i < 100; i++)
                 {
-                    xpoints.Add(i);
-                    ypoints.Add(j);
+                    var j = lang.graphingFunction(coefInput, constInput, i.ToString(), ListModule.OfSeq(clist));
+                    if (Xfirst)
+                    {
+                        xpoints.Add(i);
+                        ypoints.Add(j);
+                    }
+                    else
+                    {
+                        xpoints.Add(j);
+                        ypoints.Add(i);
+                    }
                 }
-                else {
-                    xpoints.Add(j);
-                    ypoints.Add(i);
-                }
+
+                WpfPlot1.Plot.AddScatter(xpoints.ToArray(), ypoints.ToArray());
+                WpfPlot1.Refresh();
+
+            }
+            catch (Exception exception)
+            {
+                handleInterpreterExceptions(exception);
             }
 
-            WpfPlot1.Plot.AddScatter(xpoints.ToArray(), ypoints.ToArray());
-            WpfPlot1.Refresh();
+
+
+
+
         }
 
         private void Execute_Run_Tests_Click(object sender, RoutedEventArgs e)
@@ -268,6 +302,46 @@ namespace Group_9_Project
             Console.SetOut(consoleWriter);
 
             var res = lang.runTests;
+
+            int passcount = 0;
+            int totalcount = 0;
+            List<string> failureMsgs = new List<string>();
+            List<string> allMsgs = new List<string>();
+
+            foreach (var item in res)
+            {
+                if (item.Item2)
+                {
+                    passcount++;
+                }
+                else {
+                    failureMsgs.Add(item.Item1);
+                }
+
+                totalcount++;
+                allMsgs.Add(item.Item1);
+            }
+
+            if (passcount < totalcount)
+            {
+                string msg = "";
+                foreach (var item in failureMsgs)
+                {
+                    msg += item + "\n";
+                }
+
+                MessageBox.Show("Not all tests passed.\n" + msg, "Test Results: " + passcount + "/" + totalcount + " passed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            else {
+                string msg = "";
+                foreach (var item in allMsgs)
+                {
+                    msg += "  (" + item + ")  ";
+                }
+
+                MessageBox.Show("All tests passed. (" + passcount + "/" + totalcount + ")\n\n Raw Test Output:\n" + msg, "Test Results: " + passcount + "/" + totalcount + " passed", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+            }
+
 
         }
     }

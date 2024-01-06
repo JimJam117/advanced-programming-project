@@ -1,105 +1,239 @@
 ﻿namespace FSharpCodeLib
 
-type Point = {X: int; Y: int; Z: int}
-
-module Say =
-    let hello name =
-        printfn "Hello %s" name
-
-
-// Simple Interpreter in F#
-// Author: R.J. Lapeer 
-// Date: 23/10/2022
+// Interpreter in F#
+// Group: Group 9, James Sparrow and Seb Taylor
+// Author of original interpreter: R.J. Lapeer 
+// Date: 06/01/2024
 // Reference: Peter Sestoft, Grammars and parsing with F#, Tech. Report
 open System
 
 module lang =
 
+    // exception functions
+    let lexError = System.Exception("Lexer error")
+    let parseError = System.Exception("Parser error")
+    let divisionByZeroError = System.Exception("Division by zero error!")
+    let denomZeroError = System.Exception("Denominator of a rational cannot be zero!")
+    let symError = System.Exception("No value associated to variable name")
+    let linearError = System.Exception("The coefficient cannot be 0.")
+
+    // reducing rationals
+    let rec gcd a b =
+        if b = 0 then a
+        else gcd b (a % b)
+    let lcm a b =
+        abs (a * b) / gcd a b
+
+    // find next largest common multiple intger. Used for converting floats to rats
+    let findNextLcmInteger f =
+        let rec loop n =
+            let x = f * n
+            if x = float (int x) then
+                int x, int n
+            else
+                loop (n + 1.)
+        loop 1.
+
+    // reduce to simplest form
+    let reduceRational (n,d) =
+        if d = 0 then
+            raise denomZeroError
+        else
+            let common = gcd n d
+            let cn = n / common
+            let cd = d / common
+            if cd < 0 then 
+                let cd = abs cd
+                let cn = cn * -1
+                (cn, cd)
+            else
+                (cn, cd)
+
+    // root finding functions
+    let rtfunc x a nth =  float x ** float nth - float a
+    let rtfunc' x nth =  nth * float x ** float (nth - 1.)
+    let nthRoot (b) (nth) =
+        let threashold = 0.0000000001  // value we can use to determine if we are close enough
+        let rec findRoot i =
+            let xn = i - (rtfunc i b nth) / (rtfunc' i nth)
+            let min = abs (xn - i)
+            if Math.Round(min,8) < threashold then xn
+            else findRoot xn
+        findRoot 1.
+
+    let rec float2Rat f d =
+        let n = int(f * float(d))
+        let n2, d2 = reduceRational (n, d)
+
+        if d < 999999 then
+            float2Rat f (d + 1)
+        else
+            (n2, d2)
+
+    // Number types, with operators overloaded
     type NumberType =
-    | NT_INT of int
-    | NT_FLOAT of float
-    with
-       static member getIntValue (f1:NumberType) =
-                match f1 with
-                | NT_INT x -> int x
-                | NT_FLOAT x -> int x
+        | NT_INT of int
+        | NT_FLOAT of float
+        | NT_RAT of int*int
+        with
+        
+           static member getIntValue (f1:NumberType) =
+                    match f1 with
+                    | NT_INT x -> int x
+                    | NT_FLOAT x -> int x
+                    | NT_RAT (x,y) -> int x / int y
 
-       static member getFloatValue (f1:NumberType) =
-                match f1 with
-                | NT_INT x -> float x
-                | NT_FLOAT x -> float x
+           static member getFloatValue (f1:NumberType) =
+                    match f1 with
+                    | NT_INT x -> float x
+                    | NT_FLOAT x -> float x
+                    | NT_RAT (x,y) -> float x / float y
 
-        static member Pow (f1:NumberType, f2:NumberType) =
-                match f1, f2 with
-                | NT_INT x, NT_INT y -> NT_INT (int (float x ** y))
-                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x ** y)
-                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x ** y)
-                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x ** float y)
+           static member getRatValue (f1:NumberType) =
+                    match f1 with
+                    | NT_INT x -> (x, 1)
+                    | NT_FLOAT x -> (float2Rat x 2)
+                    | NT_RAT (x,y) -> (x, y)
 
-        static member (+) (f1:NumberType, f2:NumberType) =
-                match f1, f2 with
-                | NT_INT x, NT_INT y -> NT_INT (x + y)
-                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x + y)
-                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x + y)
-                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x + float y)
+            static member Pow (f1:NumberType, f2:NumberType) =
+                    match f1, f2 with
+                    | NT_INT x, NT_INT y -> NT_INT (int (float x ** y))
+                    | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x ** y)
+                    | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x ** y)
+                    | NT_FLOAT x, NT_INT y -> NT_FLOAT (x ** float y)
+
+                    | NT_RAT (n1,d1), NT_RAT (n2,d2) -> NT_RAT (reduceRational(int(float n1 ** float n2), int(float d1 ** float (n2*d2))))
+
+                    | NT_RAT (n1,d1), NT_INT i -> NT_RAT (reduceRational(int(float n1 ** float i), int(float d1 ** float i)))
+                    | NT_RAT (n1,d1), NT_FLOAT i -> NT_RAT (reduceRational(int(float n1 ** i), int(float d1 ** i)))
+                
+                    | NT_INT i, NT_RAT (n1,d1) -> 
+                        let temp = float i ** float n1
+                        let nrt = nthRoot temp d1
+                        NT_FLOAT nrt
+                
+                    | NT_FLOAT i, NT_RAT (n1,d1) ->
+                        let temp = float i ** float n1
+                        let nrt = nthRoot temp d1
+                        NT_FLOAT nrt
+
+            static member (+) (f1:NumberType, f2:NumberType) =
+                    match f1, f2 with
+                    | NT_INT x, NT_INT y -> NT_INT (x + y)
+                    | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x + y)
+                    | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x + y)
+                    | NT_FLOAT x, NT_INT y -> NT_FLOAT (x + float y)
+
+                    | NT_RAT (n1,d1), NT_RAT (n2,d2) -> NT_RAT (reduceRational (n1 * d2 + d1 * n2  ,d1*d2))
+
+                    | NT_RAT (n1,d1), NT_INT i -> NT_RAT (reduceRational(n1 + (i*d1), d1))
+                    | NT_INT i, NT_RAT (n1,d1) -> NT_RAT (reduceRational(n1 + (i*d1), d1))
 
 
-        static member (-) (f1:NumberType, f2:NumberType) =
-                match f1, f2 with
-                | NT_INT x, NT_INT y -> NT_INT (x - y)
-                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x - y)
-                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x - y)
-                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x - float y)
+                    | NT_RAT (n1,d1), NT_FLOAT i -> 
+                        let nx, dx = findNextLcmInteger i
+                        NT_RAT (reduceRational(n1 * dx + d1 * nx  ,d1*dx))
+
+                    | NT_FLOAT i, NT_RAT (n1,d1) -> 
+                        let nx, dx = findNextLcmInteger i
+                        NT_RAT (reduceRational(n1 * dx + d1 * nx  ,d1*dx))
 
 
-        static member (*) (f1:NumberType, f2:NumberType) =
-                match f1, f2 with
-                | NT_INT x, NT_INT y -> NT_INT (x * y)
-                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x * y)
-                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x * y)
-                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x * float y)
+            static member (-) (f1:NumberType, f2:NumberType) =
+                    match f1, f2 with
+                    | NT_INT x, NT_INT y -> NT_INT (x - y)
+                    | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x - y)
+                    | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x - y)
+                    | NT_FLOAT x, NT_INT y -> NT_FLOAT (x - float y)
+
+                    | NT_RAT (n1,d1), NT_RAT (n2,d2) -> NT_RAT (reduceRational(n1 * d2 - d1 * n2  ,d1*d2))
+                
+                    | NT_RAT (n1,d1), NT_INT i -> NT_RAT (reduceRational(n1 - i * d1, d1))
+                    | NT_INT i, NT_RAT (n1,d1) -> NT_RAT (reduceRational(i * d1 - n1, d1))
+
+                    | NT_RAT (n1,d1), NT_FLOAT i -> 
+                        let nx, dx = findNextLcmInteger i
+                        NT_RAT (reduceRational(n1 * dx - d1 * nx  ,d1*dx))
+                    | NT_FLOAT i, NT_RAT (n1,d1) ->
+                        let nx, dx = findNextLcmInteger i
+                        NT_RAT (reduceRational(d1 * nx - n1 * dx ,d1*dx))
 
 
-        static member (/) (f1:NumberType, f2:NumberType) =
-                match f1, f2 with
-                | NT_INT x, NT_INT y -> NT_INT (x / y)
-                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x / y)
-                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x / y)
-                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x / float y)
+            static member (*) (f1:NumberType, f2:NumberType) =
+                    match f1, f2 with
+                    | NT_INT x, NT_INT y -> NT_INT (x * y)
+                    | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x * y)
+                    | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x * y)
+                    | NT_FLOAT x, NT_INT y -> NT_FLOAT (x * float y)
 
-        static member (%) (f1:NumberType, f2:NumberType) =
-                match f1, f2 with
-                | NT_INT x, NT_INT y -> NT_INT (x % y)
-                | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x % y)
-                | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x % y)
-                | NT_FLOAT x, NT_INT y -> NT_FLOAT (x % float y)
+                    | NT_RAT (n1,d1), NT_RAT (n2,d2) -> NT_RAT (reduceRational(n1 * n2  ,d1 * d2))
 
-        static member (~-) (f1:NumberType) =
-                match f1 with
-                | NT_INT x -> NT_INT (-x)
-                | NT_FLOAT x -> NT_FLOAT (-x)
+                    | NT_RAT (n1,d1), NT_INT i -> NT_RAT (reduceRational(n1 * i, d1))
+                    | NT_INT i, NT_RAT (n1,d1) -> NT_RAT (reduceRational(n1 * i, d1))
+
+                    | NT_RAT (n1,d1), NT_FLOAT i -> 
+                        let nx, dx = findNextLcmInteger i
+                        NT_RAT (reduceRational(n1 * nx, d1 * dx))
+                    | NT_FLOAT i, NT_RAT (n1,d1) ->
+                        let nx, dx = findNextLcmInteger i
+                        NT_RAT (reduceRational(n1 * nx, d1 * dx))
+
+            static member (/) (f1:NumberType, f2:NumberType) =
+                    match f1, f2 with
+                    | NT_INT x, NT_INT y -> NT_INT (x / y)
+                    | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x / y)
+                    | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x / y)
+                    | NT_FLOAT x, NT_INT y -> NT_FLOAT (x / float y)
+
+                    | NT_RAT (n1,d1), NT_RAT (n2,d2) -> NT_RAT (reduceRational(n1 *d2,d1*n2))
+
+                    | NT_INT i, NT_RAT (n2,d2) -> NT_RAT (reduceRational(n2, d2*i))
+                    | NT_RAT (n1,d1), NT_INT i -> NT_RAT (reduceRational(n1,d1*i))
+                    | NT_FLOAT i, NT_RAT (n2,d2) -> 
+                        let nx, dx = findNextLcmInteger i
+                        NT_RAT (reduceRational(nx*d2,n2*dx))
+                    | NT_RAT (n1,d1), NT_FLOAT i -> 
+                        let nx, dx = findNextLcmInteger i
+                        NT_RAT (reduceRational(n1*dx,d1*nx))
+
+            static member (%) (f1:NumberType, f2:NumberType) =
+                    match f1, f2 with
+                    | NT_INT x, NT_INT y -> NT_INT (x % y)
+                    | NT_FLOAT x, NT_FLOAT y -> NT_FLOAT (x % y)
+                    | NT_INT x, NT_FLOAT y -> NT_FLOAT (float x % y)
+                    | NT_FLOAT x, NT_INT y -> NT_FLOAT (x % float y)
+
+                    | NT_RAT (n1,d1), NT_RAT (n2,d2) -> NT_INT 0
+                        //let nq = (n1 * d2)
+                        //let dq = (d1 * n2)
+                        //NT_RAT (reduceRational(nq * n2, dq * d2)) // WIP
+
+                    /// WIP
+                    | NT_INT i, NT_RAT (n2,d2) -> NT_INT 0
+                    | NT_FLOAT i, NT_RAT (n2,d2) -> NT_INT 0
+                    | NT_RAT (n1,d1), NT_INT i -> NT_INT 0
+                    | NT_RAT (n1,d1), NT_FLOAT i -> NT_INT 0
+
+            static member (~-) (f1:NumberType) =
+                    match f1 with
+                    | NT_INT x -> NT_INT (-x)
+                    | NT_FLOAT x -> NT_FLOAT (-x)
+                    | NT_RAT (n,d) -> NT_RAT ((-n),d) // negate the numerator
 
 
     // list of token types - this is a I believe a discriminated union
     type terminal = 
-        Add | Sub | Mul | Div | Pow | Mod | Lpar | Rpar | Equ | FloatNum of NumberType | Vid of string | IntNum of NumberType
-
+        Add | Sub | Mul | Div | Pow | Mod | Lpar | Rpar | Equ | FloatNum of NumberType | Vid of string | IntNum of NumberType | RatNum of NumberType
 
 
     let str2lst s = [for c in s -> c]           // simple function to turn a string into a list of chars
     let isblank c = System.Char.IsWhiteSpace c  // simple function to check if char c is whitespace
     let isdigit c = System.Char.IsDigit c       // simple function to check if char c is a digit
     let isdot c =  c = '.'                      // simple function to check if char c is a dot
+    let isratdash c = c = '\\'                  // indicator of a rational number
     let isletter c = System.Char.IsLetter c       // simple function to check if char c is a letter
     let intVal (c:char) = (int)((int)c - (int)'0') // convert char c into int
     let floatVal (c:char) = (float)((float)c - (float)'0') // convert char c into int
-
-    // exception functions
-    let lexError = System.Exception("Lexer error")
-    let parseError = System.Exception("Parser error")
-    let divisionByZeroError = System.Exception("Division by zero error!")
-    let symError = System.Exception("No value associated to variable name")
-    let linearError = System.Exception("The coefficient cannot be 0.")
 
 
 
@@ -108,6 +242,16 @@ module lang =
         let rec recursiveloop(iStr) = 
             match iStr with
              | c :: tail when isdot c -> (true)
+             | c :: tail when isdigit c -> recursiveloop(tail)
+             | _ -> (false)
+
+        recursiveloop(iStr)
+
+
+    let isNextRat(iStr) = 
+        let rec recursiveloop(iStr) = 
+            match iStr with
+             | c :: tail when isratdash c -> (true)
              | c :: tail when isdigit c -> recursiveloop(tail)
              | _ -> (false)
 
@@ -124,6 +268,24 @@ module lang =
             | c :: tail when isdot c -> scFloat(tail, float (iVal), 1)
             | c :: tail when isdigit c -> scFloat(tail, float 10*iVal+(floatVal c), 0)
             | _ -> (iStr, iVal) // return tuple of string and value
+
+
+    let rec scRational(iStr, iVal, firstDigit, pastDash, (iValn, iVald)) = 
+        match firstDigit with
+        | true -> match pastDash with
+                    | true -> scRational(iStr, iVal, false, pastDash, (iValn, iVal))
+                    | false -> scRational(iStr, iVal, false, pastDash, (iVal, iVald))
+        | false -> match iStr with
+                    | c :: tail when isdigit c && pastDash = false -> 
+                                                scRational(tail, iVal, false, pastDash, (10*iValn+(intVal c), iVald))
+
+                    | c :: tail when isratdash c -> scRational(tail, 0, true, true, (iValn, iVald))
+                    | c :: tail when isdigit c && pastDash = true -> scRational(tail, iVal, false, pastDash, (iValn, 10*iVald+(intVal c)))
+                    | _ -> (iStr, reduceRational (iValn,iVald) )// return tuple of string and value
+
+
+
+
 
     let rec scInt(iStr, iVal) = 
         // this function works recursively, so we match the input string with two options:
@@ -176,11 +338,15 @@ module lang =
             // which is tail with the characters that make up ival removed
             | c :: tail when isdigit c -> 
                                         match isNextFloat (c :: tail) with
-                                        | false -> let (iStr, iVal)  = scInt(tail, intVal c) 
-                                                   IntNum (NT_INT iVal) :: scan iStr
                                         | true -> let (iStr, iVal)  = scFloat(tail, intVal c, 0) 
                                                   FloatNum (NT_FLOAT iVal) :: scan iStr
+                                        | false -> match isNextRat (c :: tail) with
+                                                    | true -> let (iStr, (iVal:int*int))  = scRational(tail, intVal c, true, false, (0, 0))
+                                                              RatNum (NT_RAT iVal) :: scan iStr
+                                                    | false -> let (iStr, iVal)  = scInt(tail, intVal c) 
+                                                               IntNum (NT_INT iVal) :: scan iStr
 
+               
             // same as above but for variable names
             | c :: tail when isletter c -> let (iStr, vName) = scChar(tail, c.ToString()) // UPDATE
                                            Vid vName :: scan iStr
@@ -201,15 +367,14 @@ module lang =
     // <Eopt>     ::= "+" <T> <Eopt> | "-" <T> <Eopt> | <empty>
 
     // <T>        ::= <P> <Topt>
-    // <Topt>     ::= "*" <P> <Topt> | "/" <P> <Topt> | <empty>
+    // <Topt>     ::= "*" <P> <Topt> | "/" <P> <Topt> | "(" <E> ")" | <varID> | <empty>
 
-    // <P>        ::= <C> <Popt>
+    // <P>        ::= <NR> <Popt>
     // <Popt>     ::= "^" <NR> <Popt> | <empty>
 
-    // <C>        ::= <NR> <Copt>
-    // <Copt>     ::= "(" <E> ")" | <varID> | <empty>
+    // <NR>   	::= "-"["IntNum" | "FloatNum" | "RatNum" | "varVal" ] <value> | 
+    //              ["IntNum" | "FloatNum" | "RatNum" | "varVal" ] <value> | "(" <E> ")" | "-(" <E> ")"
 
-    // <NR>       ::= ["IntNum" | "FloatNum" | "varVal" ] <value> | "(" <E> ")"
     // <varID>    ::= [a-z,A-Z]+     (* varVal is fetched from symbol table/list with key varID *)
 
 
@@ -231,21 +396,16 @@ module lang =
             | Mul :: tail -> (P >> Topt) tail
             | Div :: tail -> (P >> Topt) tail
             | Mod :: tail -> (P >> Topt) tail
-            | _ -> tList
-
-        and P tList = (C >> Popt) tList
-        and Popt tList =
-            match tList with
-            | Pow :: tail -> (C >> Popt) tail
-            | _ -> tList
-
-        and C tList = (NR >> Copt) tList
-        and Copt tList =
-            match tList with
             | Vid vName :: tail -> tail
             | Lpar :: tail -> match E tail with 
                               | Rpar :: tail -> tail
                               | _ -> raise parseError
+            | _ -> tList
+
+        and P tList = (NR >> Popt) tList
+        and Popt tList =
+            match tList with
+            | Pow :: tail -> (NR >> Popt) tail
             | _ -> tList
 
         // NR simply matches either a number or variable name
@@ -256,6 +416,8 @@ module lang =
             | Sub :: IntNum value :: tail -> tail
             | FloatNum value :: tail -> tail
             | Sub :: FloatNum value :: tail -> tail
+            | RatNum value :: tail -> tail
+            | Sub :: RatNum value :: tail -> tail
             | Vid vName :: tail -> tail
             | Sub :: Lpar :: tail -> match E tail with 
                               | Rpar :: tail -> tail
@@ -291,8 +453,9 @@ module lang =
 
 
 
-    // Parse and evaluate
-    let parseNeval tList (symList:List<string*NumberType>) = // UPDATED
+
+    // evaluation
+    let parseNeval tList convertToFloat (symList:List<string*NumberType>) = // UPDATED
 
         // E section
         let rec E tList = (T >> Eopt) tList
@@ -316,22 +479,6 @@ module lang =
             | Mod :: tail -> let (tLst, (vID, tval)) = P tail
                              if (tval <> tval * NT_INT 0) then Topt (tLst, (vID, value % tval))
                              else raise divisionByZeroError
-            | _ -> (tList, ("", value))
-
-
-        // T section
-        and P tList = (C >> Popt) tList
-        and Popt (tList, (vID, value)) =
-            match tList with
-            | Pow :: tail -> let (tLst, (vID, tval)) = C tail
-                             Popt (tLst, (vID, value ** tval))
-            | _ -> (tList, ("", value))
-
-
-        // T section
-        and C tList = (NR >> Copt) tList
-        and Copt (tList, (vID, value)) =
-            match tList with
             | Vid vName :: tail -> let res = searchVName vName symList
                                    if (fst res) then (tail, (vID, value * (snd res)))
                                    else raise symError
@@ -341,11 +488,44 @@ module lang =
                               | _ -> raise parseError
             | _ -> (tList, ("", value))
 
+
+        // T section
+        and P tList = (NR >> Popt) tList
+        and Popt (tList, (vID, value)) =
+            match tList with
+            | Pow :: tail -> let (tLst, (vID, tval)) = NR tail
+                             Popt (tLst, (vID, value ** tval))
+            | _ -> (tList, ("", value))
+
+
         // NR Section
         and NR tList: terminal list * (string * NumberType) =
             match tList with 
-            | IntNum value :: tail -> (tail, ("", value))                                                        
-            | Sub :: IntNum value :: tail -> (tail, ("", -value))
+            | RatNum value :: tail -> match convertToFloat with
+                                        | false -> (tail, ("", value))
+                                        | true -> 
+                                                    let n,d = match value with
+                                                                | NT_RAT (x,y) -> x,y
+                                                    (tail, ("", NT_FLOAT (float n / float d)))                                                                 
+            | Sub :: RatNum value :: tail -> match convertToFloat with
+                                        | false -> (tail, ("", value))
+                                        | true -> 
+                                                    let n,d = match value with
+                                                                | NT_RAT (x,y) -> x,y
+                                                    (tail, ("", NT_FLOAT (-(float n / float d))))   
+            | IntNum value :: tail -> match convertToFloat with
+                                        | false -> (tail, ("", value))
+                                        | true -> 
+                                                    let raw = match value with
+                                                                | NT_INT i -> i
+                                                    (tail, ("", NT_FLOAT (float raw)))                                                                 
+            | Sub :: IntNum value :: tail -> match convertToFloat with
+                                        | false -> (tail, ("", -value))
+                                        | true -> 
+                                                    let raw = match value with
+                                                                | NT_INT i -> i
+                                                    (tail, ("", NT_FLOAT (float -raw)))
+
             | FloatNum value :: tail -> (tail, ("", value))
             | Sub :: FloatNum value :: tail -> (tail, ("", -value))
             | Vid vName :: tail -> let res = searchVName vName symList
@@ -400,7 +580,7 @@ module lang =
             let sList = printTList oList
             let pList = parser oList  // pList is the remaining token list and should be empty
             if not pList.IsEmpty then raise parseError // NOTE this update to avoid expressions like 3(2+3) that would return a value of 3 and have a nonempty token list ([Lpar Num 2 Add Num 3 Rpar], 3)
-            let Out = parseNeval oList symTList
+            let Out = parseNeval oList false symTList
             let tempID = fst (snd Out)
             let tempVal = snd (snd Out)
 
@@ -425,13 +605,13 @@ module lang =
             output,symTList
 
 
-    let rec solveGequation (input:string, init:bool, symTList:List<string*NumberType>, output) : string*List<string*NumberType> = 
+    let rec solveGequation (input:string, init:bool, reduceToFloat:bool, symTList:List<string*NumberType>, output) : string*List<string*NumberType> = 
             if input <> null then
                 let oList = lexer input
                 let sList = printTList oList
                 let pList = parser oList  // pList is the remaining token list and should be empty
                 if not pList.IsEmpty then raise parseError // NOTE this update to avoid expressions like 3(2+3) that would return a value of 3 and have a nonempty token list ([Lpar Num 2 Add Num 3 Rpar], 3)
-                let Out = parseNeval oList symTList
+                let Out = parseNeval oList reduceToFloat symTList
                 let tempID = fst (snd Out)
                 let tempVal = snd (snd Out)
 
@@ -441,26 +621,27 @@ module lang =
                 // Check whether variable name was already in symTList and if so replace with new value
                 if tempID.Length > 0 then // update symbol table
                     if symTList.IsEmpty then 
-                        solveGequation (null, false, symTList@[tempID, tempVal], tempVal)  // append new value if symbol table is empty
+                        solveGequation (null, false, reduceToFloat, symTList@[tempID, tempVal], tempVal)  // append new value if symbol table is empty
                     else 
                         let res = check4vid symTList tempID tempVal // if tempID is already in symbol table replace its value
                         let check = res.Equals(symTList)      // Check whether res is equal to the original (means no replacing was done)
-                        if check then solveGequation (null, false, symTList@[tempID, tempVal], tempVal)  // if true pass old list with appended new tuple                 
-                        else solveGequation (null, false, res, tempVal)   // if false pass updated res list with updated tuple
+                        if check then solveGequation (null, false, reduceToFloat, symTList@[tempID, tempVal], tempVal)  // if true pass old list with appended new tuple                 
+                        else solveGequation (null, false, reduceToFloat, res, tempVal)   // if false pass updated res list with updated tuple
                 else 
                     if tempVal.ToString() = null then
-                        solveGequation (null, false, symTList, output)
+                        solveGequation (null, false, reduceToFloat, symTList, output)
                     else
-                        solveGequation (null, false, symTList,  tempVal)
+                        solveGequation (null, false,  reduceToFloat, symTList,  tempVal)
             else
+            let parsedOutput = 
+                match output with
+                | NT_INT i -> string i
+                | NT_FLOAT f -> string f
+                | NT_RAT (x,y) -> if reduceToFloat then string (float x / float y)
+                                    else
+                                        string x + "\\" + string y
 
-                let parsedOutput = 
-                    match output with
-                    | NT_INT i -> float i
-                    | NT_FLOAT f -> f
-
-                string parsedOutput,symTList
-
+            parsedOutput,symTList
     // ax + b = c
     // Function to find x:
     let findXinLinearEq a b c =
@@ -473,9 +654,9 @@ module lang =
 
     // ax + b = c
     let public graphingFunction (a:string) (b:string) (c:string) (symTList:List<string*NumberType>) = 
-        let ga = solveGequation(a, true, symTList, NT_INT 0)
-        let gb = solveGequation(b, true, symTList, NT_INT 0)
-        let gc = solveGequation(c, true, symTList, NT_INT 0)
+        let ga = solveGequation(a, true, true, symTList, NT_INT 0)
+        let gb = solveGequation(b, true, true, symTList, NT_INT 0)
+        let gc = solveGequation(c, true, true, symTList, NT_INT 0)
     
         let fa = float (fst ga)
         let fb = float (fst gb)
@@ -487,14 +668,14 @@ module lang =
             ((fc - fb) / fa)
 
     let runStandardTest (input:string) (expectedOutputString:string) (inputSymTList:List<string*NumberType>) (expectedSymTList:List<string*NumberType>): string*Boolean =
-        let res = solveGequation(input, true, inputSymTList, NT_INT 0)
+        let res = solveGequation(input, true, false, inputSymTList, NT_INT 0)
         if fst res <> expectedOutputString then 
             ("Expected output does not match. Expected: '" + expectedOutputString + "' for input '" + input + "', Actual: '" + fst res + "'",false)
         else 
             if snd res <> expectedSymTList then
                 ("Expected symlist does not match",false)
             else
-                ("Test passed! Input: " + input + ", Output: " + fst res,true)
+                ("OK - Input: " + input + ", Output: " + fst res,true)
  
 
     let runGraphingTest (coef:string) (const1:string) (const2:string) (expectedXvalue:float) =
@@ -504,9 +685,15 @@ module lang =
             ("Expected x value does not match. Expected: '" + string expectedXvalue + "' for input " + inputString + ", Actual: '" + string ans + "'",false)
         else
             ("Test passed! Input: " + inputString + ", X value: " + string expectedXvalue,true)
-        
+    
+    
+    
+    
     let runTests =
+   
         // Standard tests (first ones in report section 'Arithmetic expression testing'):
+        //let rationalTests1 = runStandardTest "4\5 + 7\8" "d" List.empty List.empty
+
         let test1 = runStandardTest "5 * 3 + (2 * 3 - 2)/ 2 + 6" "23" List.empty List.empty
         let test2 = runStandardTest "9 - 3 - 2" "4" List.empty List.empty
         let test3 = runStandardTest "10 / 3" "3" List.empty List.empty
@@ -531,23 +718,75 @@ module lang =
         let xTest5 = runStandardTest "(2*x) -x^2 *5 % 2" "5" [("x", NT_INT 3)] [("x", NT_INT 3)]
         let xTest6 = runStandardTest "(2*x) -x^2 * (5 % 2)" "-3" [("x", NT_INT 3)] [("x", NT_INT 3)]
 
+        // coef tests
+        let coefTest1 = runStandardTest "3(2)" "6" List.empty List.empty
+        let coefTest2 = runStandardTest "3(-2)" "-6" List.empty List.empty
+        let coefTest3 = runStandardTest "3((3))" "9" List.empty List.empty
+        let coefTest4 = runStandardTest "6(12/2^2)" "18" List.empty List.empty
+        let coefTest5 = runStandardTest "3x" "12" [("x", NT_INT 4)] [("x", NT_INT 4)]
+        let coefTest6 = runStandardTest "x(5)" "15" [("x", NT_INT 3)] [("x", NT_INT 3)]
+
+        // rational tests
+
+        // rational addition
+        let rationalTest1 = runStandardTest "1\\6 + 2\\3" "5\\6" List.empty List.empty
+        let rationalTest2 = runStandardTest "2\\6 + 2\\3" "1\\1" List.empty List.empty
+        let rationalTest3 = runStandardTest "1 + 2\\3" "5\\3" List.empty List.empty
+        let rationalTest4 = runStandardTest "1.2 + 2\\3" "28\\15" List.empty List.empty
+        let rationalTest5 = runStandardTest "2\\3 + 2" "8\\3" List.empty List.empty
+        let rationalTest6 = runStandardTest "2\\6 + 0.5" "5\\6" List.empty List.empty
+
+        // rational subtraction
+        let rationalTest7 = runStandardTest "2\\6 - 2\\3" "-1\\3" List.empty List.empty
+        let rationalTest8 = runStandardTest "1\\6 - 2\\3" "-1\\2" List.empty List.empty
+        let rationalTest9 = runStandardTest "1 - 2\\3" "1\\3" List.empty List.empty
+        let rationalTest10 = runStandardTest "0.5 - 2\\3" "-1\\6" List.empty List.empty
+
+        // rational multiplaction
+        let rationalTest7 = runStandardTest "2\\6 * 2\\3" "2\\9" List.empty List.empty
+        let rationalTest8 = runStandardTest "1\\6 * 2\\3" "1\\9" List.empty List.empty
+        let rationalTest9 = runStandardTest "5 * 2\\3" "10\\3" List.empty List.empty
+        let rationalTest10 = runStandardTest "0.75 * 13\\25" "39\\100" List.empty List.empty
+
+        // rational divison
+        let rationalTest11 = runStandardTest "2\\6 / 2\\3" "1\\2" List.empty List.empty
+        let rationalTest12 = runStandardTest "1\\6 / 2\\3" "1\\4" List.empty List.empty
+        let rationalTest13 = runStandardTest "5 / 2\\3" "2\\15" List.empty List.empty
+        let rationalTest14 = runStandardTest "0.75 / 13\\25" "75\\52" List.empty List.empty
+
+        // rational mod (should all pass with 0 as operation not implemented)
+        let rationalTest15 = runStandardTest "2\\6 % 2\\3" "0" List.empty List.empty
+        let rationalTest16 = runStandardTest "5 % 4\\5" "0" List.empty List.empty
+        let rationalTest17 = runStandardTest "2.2 % 2\\3" "0" List.empty List.empty
+        let rationalTest18 = runStandardTest "4\\5 % 2" "0" List.empty List.empty
+
+        // rational exponent
+        let rationalTest19 = runStandardTest "2\\6 ^ 2\\3" "1\\729" List.empty List.empty
+        let rationalTest20 = runStandardTest "5 ^ 4\\5" "3.623898318388478" List.empty List.empty
+        let rationalTest21 = runStandardTest "2.2 ^ 2\\3" "1.6915381116229844" List.empty List.empty
+        let rationalTest22 = runStandardTest "4\\5 ^ 2" "16\\25" List.empty List.empty
+
+
         /// graphing tests
         let graphingTest1 = runGraphingTest "1" "2" "3" 1.
         let graphingTest2 = runGraphingTest "2 * 3" "1" "13" 2.
         let graphingTest3 = runGraphingTest "(2^2)" "10" "124" 28.5
         let graphingTest4 = runGraphingTest "41 - 12" "3" "32" 1.
 
-        let tests = [test1; test2; test3; test4; test5; test6;
+        [test1; test2; test3; test4; test5; test6;
         test7; test8; test9; test10; test11; test12; 
         test13; test14; assignmentTest; xTest1; xTest2;
-        xTest3; xTest4; xTest5; xTest6; graphingTest1;
-        graphingTest2; graphingTest3; graphingTest4]
+        xTest3; xTest4; xTest5; xTest6; coefTest1; coefTest2; 
+        coefTest3; coefTest4; coefTest5; coefTest6; graphingTest1;
+        graphingTest2; graphingTest3; graphingTest4; rationalTest1;
+        rationalTest2; rationalTest3; rationalTest4; rationalTest5;
+        rationalTest6; rationalTest7; rationalTest8; rationalTest9;
+        rationalTest10; rationalTest11; rationalTest12; rationalTest13;
+        rationalTest14; rationalTest15; rationalTest16; rationalTest17;
+        rationalTest18; rationalTest19; rationalTest20; rationalTest21;
+        rationalTest22]
 
-        for test in tests do
-            match snd test with
-            | true -> Console.WriteLine("ok - " + fst test)
-            | false -> Console.WriteLine("FAILURE - " + fst test)
-        
+
 
 
 
