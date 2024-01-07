@@ -16,6 +16,7 @@ module lang =
     let denomZeroError = System.Exception("Denominator of a rational cannot be zero!")
     let symError = System.Exception("No value associated to variable name")
     let linearError = System.Exception("The coefficient cannot be 0.")
+    let outOfBoundsError = System.Exception("A value has gone out of bounds.")
 
     // reducing rationals helper funcs
     let rec gcd a b =
@@ -25,14 +26,22 @@ module lang =
         abs (a * b) / gcd a b
 
     // find next largest common multiple intger. Used for converting floats to rats
-    let findNextLcmInteger f =
+    let findNextLcmInteger (f:float) =
+        // first round number of decimal places. Need to reduce down if too long
+        let rf = Math.Round(f, 7)
+        
         let rec loop n =
-            let x = f * n
+            let x = rf * n
             let xw = float (int x) // convert to int to remove decimal, then back to float
-            if x = xw then
-                int x, int n
+            if int x >= System.Int32.MaxValue - 1 || int x <= System.Int32.MinValue + 1 then 
+                raise outOfBoundsError
             else
-                loop (n + 1.)
+                if x = xw then
+                    int x, int n
+                else
+                    loop (n + 1.)
+        
+
         loop 1.
 
     // reduce to simplest form
@@ -40,9 +49,17 @@ module lang =
         if d = 0 then
             raise denomZeroError
         else
+            if n >= System.Int32.MaxValue - 1 || n <= System.Int32.MinValue + 1 then 
+                raise outOfBoundsError
+            if d >= System.Int32.MaxValue - 1 || d <= System.Int32.MinValue + 1 then 
+                raise outOfBoundsError
             let common = gcd n d
             let cn = n / common
             let cd = d / common
+            if common >= System.Int32.MaxValue - 1 || common <= System.Int32.MinValue + 1 ||
+               cn >= System.Int32.MaxValue - 1 || cn <= System.Int32.MinValue + 1 ||
+               cd >= System.Int32.MaxValue - 1 || cd <= System.Int32.MinValue + 1 then 
+                raise outOfBoundsError
             if cd < 0 then 
                 let cd = abs cd
                 let cn = cn * -1
@@ -103,7 +120,10 @@ module lang =
                     | INTEGER x, FLOAT y -> FLOAT (float x ** y)
                     | FLOAT x, INTEGER y -> FLOAT (x ** float y)
 
-                    | RATIONAL (n1,d1), RATIONAL (n2,d2) -> RATIONAL (reduceRational(int(float n1 ** float n2), int(float d1 ** float (n2*d2))))
+                    | RATIONAL (n1,d1), RATIONAL (n2,d2) -> 
+                        let a = float n1 / float d1
+                        let b = float n2 / float d2
+                        FLOAT (float a ** float b)
 
                     | RATIONAL (n1,d1), INTEGER i -> RATIONAL (reduceRational(int(float n1 ** float i), int(float d1 ** float i)))
                     | RATIONAL (n1,d1), FLOAT i -> RATIONAL (reduceRational(int(float n1 ** i), int(float d1 ** i)))
@@ -128,8 +148,8 @@ module lang =
                     | RATIONAL (n1,d1), RATIONAL (n2,d2) -> RATIONAL (reduceRational (n1 * d2 + d1 * n2  ,d1*d2))
 
                     | RATIONAL (n1,d1), INTEGER i -> RATIONAL (reduceRational(n1 + (i*d1), d1))
-                    | INTEGER i, RATIONAL (n1,d1) -> RATIONAL (reduceRational(n1 + (i*d1), d1))
-
+                    | INTEGER i, RATIONAL (n1,d1) -> 
+                                            RATIONAL (reduceRational(n1 + (i*d1), d1))
 
                     | RATIONAL (n1,d1), FLOAT i -> 
                         let nx, dx = findNextLcmInteger i
@@ -158,7 +178,6 @@ module lang =
                     | FLOAT i, RATIONAL (n1,d1) ->
                         let nx, dx = findNextLcmInteger i
                         RATIONAL (reduceRational(d1 * nx - n1 * dx ,d1*dx))
-
 
             static member (*) (f1:NumberType, f2:NumberType) =
                     match f1, f2 with
@@ -215,6 +234,36 @@ module lang =
                     | RATIONAL (n1,d1), INTEGER i -> INTEGER 0
                     | RATIONAL (n1,d1), FLOAT i -> INTEGER 0
 
+            // root finding
+            static member (%%) (f1:NumberType, f2:NumberType) =
+                    match f1, f2 with
+                    | INTEGER x, INTEGER y -> 
+                        let root = nthRoot (float y) (float x)
+                        FLOAT (root)
+                    | FLOAT x, FLOAT y -> FLOAT (nthRoot y x)
+                    | INTEGER x, FLOAT y -> FLOAT (nthRoot y (float x))
+                    | FLOAT x, INTEGER y -> FLOAT (nthRoot x (float y))
+
+                    | RATIONAL (n1,d1), RATIONAL (n2,d2) ->
+                        let a = float n1 / float d1
+                        let b = float n2 / float d2
+                        FLOAT (nthRoot b a)
+
+                    | INTEGER i, RATIONAL (n2,d2) -> 
+                        let b = float n2 / float d2
+                        FLOAT (nthRoot b (float i))
+                    
+                    | FLOAT i, RATIONAL (n2,d2) -> 
+                        let b = float n2 / float d2
+                        FLOAT (nthRoot b i)
+
+                    | RATIONAL (n1,d1), INTEGER i -> 
+                        let b = float n1 / float d1
+                        FLOAT (nthRoot (float i) b)
+                    | RATIONAL (n1,d1), FLOAT i ->                         
+                        let b = float n1 / float d1
+                        FLOAT (nthRoot i b)
+
             static member (~-) (f1:NumberType) =
                     match f1 with
                     | INTEGER x -> INTEGER (-x)
@@ -224,7 +273,7 @@ module lang =
 
     // list of token types - this is a I believe a discriminated union
     type terminal = 
-        Add | Sub | Mul | Div | Pow | Mod | Lpar | Rpar | Equ | FloatNum of NumberType | Vid of string | IntNum of NumberType | RatNum of NumberType
+        Add | Sub | Mul | Div | Pow | ROOT | Mod | Lpar | Rpar | Equ | FloatNum of NumberType | Vid of string | IntNum of NumberType | RatNum of NumberType
 
 
     let str2lst s = [for c in s -> c]           // simple function to turn a string into a list of chars
@@ -262,7 +311,11 @@ module lang =
     // for example, string '123' would be converted to int 123
     let rec scInt(iStr, iVal) = 
         match iStr with
-        | c :: tail when isdigit c -> scInt(tail, 10*iVal+(intVal c))
+        | c :: tail when isdigit c -> 
+                                   if 10*iVal+(intVal c) < 0 then 
+                                                raise outOfBoundsError
+                                   else
+                                        scInt(tail, 10*iVal+(intVal c))
         | _ -> (iStr, iVal) // return tuple of string and value
 
 
@@ -279,10 +332,17 @@ module lang =
     let rec scFloat(iStr, iVal, pastDotCount) = 
         match iStr with
             | c :: tail when isdigit c && pastDotCount <> 0 -> 
-                                        scFloat(tail, float iVal+(floatVal c / (float 10 ** pastDotCount)), pastDotCount + 1)
+                                        if float iVal+(floatVal c / (float 10 ** pastDotCount)) < 0 then 
+                                                raise outOfBoundsError
+                                        else
+                                            scFloat(tail, float iVal+(floatVal c / (float 10 ** pastDotCount)), pastDotCount + 1)
 
             | c :: tail when isdot c -> scFloat(tail, float (iVal), 1)
-            | c :: tail when isdigit c -> scFloat(tail, float 10*iVal+(floatVal c), 0)
+            | c :: tail when isdigit c ->
+                                        if float 10*iVal+(floatVal c) < 0 then 
+                                                raise outOfBoundsError
+                                        else
+                                            scFloat(tail, float 10*iVal+(floatVal c), 0)
             | _ -> (iStr, iVal) // return tuple of string and value
 
     // scan rationals, same as above but again slightly more complicated
@@ -293,10 +353,17 @@ module lang =
                     | false -> scRational(iStr, iVal, false, pastDash, (iVal, iVald))
         | false -> match iStr with
                     | c :: tail when isdigit c && pastDash = false -> 
-                                                scRational(tail, iVal, false, pastDash, (10*iValn+(intVal c), iVald))
+                                                if 10*iValn+(intVal c) < 0 then 
+                                                    raise outOfBoundsError
+                                                else
+                                                    scRational(tail, iVal, false, pastDash, (10*iValn+(intVal c), iVald))
 
                     | c :: tail when isratdash c -> scRational(tail, 0, true, true, (iValn, iVald))
-                    | c :: tail when isdigit c && pastDash = true -> scRational(tail, iVal, false, pastDash, (iValn, 10*iVald+(intVal c)))
+                    | c :: tail when isdigit c && pastDash = true -> 
+                                                                    if 10*iVald+(intVal c) < 0 then 
+                                                                        raise outOfBoundsError
+                                                                    else
+                                                                        scRational(tail, iVal, false, pastDash, (iValn, 10*iVald+(intVal c)))
                     | _ -> (iStr, reduceRational (iValn,iVald) )// return tuple of string and value
 
     // Next we have our lexer function. It is made up of a recursive sub-function called scan.
@@ -311,6 +378,7 @@ module lang =
             | '/'::tail -> Div :: scan tail
             | '%'::tail -> Mod :: scan tail
             | '^'::tail -> Pow :: scan tail
+            | '√'::tail -> ROOT:: scan tail
             | '('::tail -> Lpar:: scan tail
             | ')'::tail -> Rpar:: scan tail
             | '='::tail -> Equ:: scan tail  // UPDATE
@@ -354,7 +422,7 @@ module lang =
     // <Topt>     ::= "*" <P> <Topt> | "/" <P> <Topt> | "(" <E> ")" | <varID> | <empty>
 
     // <P>        ::= <NR> <Popt>
-    // <Popt>     ::= "^" <NR> <Popt> | <empty>
+    // <Popt>     ::= "^" <NR> <Popt> | "√" <NR> <Popt> | <empty>
 
     // <NR>   	::= "-"["IntNum" | "FloatNum" | "RatNum" | "varVal" ] <value> | 
     //              ["IntNum" | "FloatNum" | "RatNum" | "varVal" ] <value> | "(" <E> ")" | "-(" <E> ")"
@@ -390,6 +458,7 @@ module lang =
         and Popt tList =
             match tList with
             | Pow :: tail -> (NR >> Popt) tail
+            | ROOT :: tail -> (NR >> Popt) tail
             | _ -> tList
 
         // NR simply matches either a number or variable name
@@ -470,6 +539,8 @@ module lang =
             match tList with
             | Pow :: tail -> let (tLst, (vID, tval)) = NR tail
                              Popt (tLst, (vID, value ** tval))
+            | ROOT :: tail -> let (tLst, (vID, tval)) = NR tail
+                              Popt (tLst, (vID, value %% tval))
             | _ -> (tList, ("", value))
 
 
@@ -731,7 +802,7 @@ module lang =
         let rationalTest18 = runStandardTest "4\\5 % 2" "0" List.empty List.empty
 
         // rational exponent
-        let rationalTest19 = runStandardTest "2\\6 ^ 2\\3" "1\\729" List.empty List.empty
+        let rationalTest19 = runStandardTest "2\\6 ^ 2\\3" "0.4807498567691361" List.empty List.empty
         let rationalTest20 = runStandardTest "5 ^ 4\\5" "3.623898318388478" List.empty List.empty
         let rationalTest21 = runStandardTest "2.2 ^ 2\\3" "1.6915381116229844" List.empty List.empty
         let rationalTest22 = runStandardTest "4\\5 ^ 2" "16\\25" List.empty List.empty

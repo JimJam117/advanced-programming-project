@@ -35,14 +35,14 @@ namespace Group_9_Project
         
         // String version of the BNF
         public string BNF = "" +
-            "BNF:\r\n<VA> ::= <varID> \"=\" <E>\r\n\r\n<E> ::= <T> <Eopt>" +
-            "\r\n<Eopt> ::= \"+\" <T> <Eopt> | \"-\" <T> <Eopt> | <empty>\r\n\r\n<T> ::= <P> <Topt>\r\n" +
+            "BNF:\r\n<VA> ::= <varID> \"=\" <E>\r\n<E> ::= <T> <Eopt>" +
+            "\r\n<Eopt> ::= \"+\" <T> <Eopt> | \"-\" <T> <Eopt> | <empty>\r\n<T> ::= <P> <Topt>\r\n" +
 
-            "<Topt> ::= \"*\" <P> <Topt> | \"/\" <P> <Topt> | \"(\" <E> \")\" | <varID> | <empty>\r\n\r\n<P> ::= <NR> <Popt>\r\n" +
-            "<Popt> ::= \"^\" <NR> <Popt> | <empty>\r\n\r\n" +
+            "<Topt> ::= \"*\" <P> <Topt> | \"/\" <P> <Topt> | \"(\" <E> \")\" | <varID> | <empty>\r\n<P> ::= <NR> <Popt>\r\n" +
+            "<Popt> ::= \"^\" <NR> <Popt> | \"√\" <NR> <Popt> | <empty>\r\n" +
 
             "<NR> ::= \"-\"[\"IntNum\" | \"FloatNum\" | \"RatNum\" | \"varVal\" ] <value> | "+
-            "[\"IntNum\" | \"FloatNum\" | \"RatNum\" | \"varVal\" ] <value> | \"(\" <E> \")\" | \"-\"(\" <E> \")\"\r\n\r\n" +
+            "[\"IntNum\" | \"FloatNum\" | \"RatNum\" | \"varVal\" ] <value> | \"(\" <E> \")\" | \"-\"(\" <E> \")\"\r\n" +
 
             "<varID> ::= [a-z,A-Z]+ \r\n(* varVal is fetched from symbol table/list with key varID *)\r\n";
 
@@ -297,9 +297,18 @@ namespace Group_9_Project
         {
             MessageBox.Show("This is the help text for our application. Here you will find the BNF and " +
                 "valid symbols to use in the query.\n\nNumber Types:\nThere are 3 number types in this application " +
-                "- integers, floats and rationals. Integers are represented by whole numbers, floating points represented" +
-                " by a number with a decimal place, and finally rational numbers uing the backslash in a fraction (i.e. 2 / 3" +
-                " is simply 2 divided by 3 as integers, but 2\\3 represents 2 thirds as a rational number.)\n\n" + BNF, 
+                "- integers, floats and rationals. Integers are whole numbers, floating points " +
+                " are numbers with a decimal place, and rational numbers are fractions denoted with a backslash (i.e. 2 / 3" +
+                " is simply 2 divided by 3 as integers, but 2\\3 represents 2 thirds as a rational number.)\n\nOperations:\nThere are" +
+                " a number of operations that can be performed, all of which can be used between data types (i.e. rationals can be " +
+                "multiplied by integers and vice versa). The operations are:\n" +
+                "Addition, with + symbol: 1 + 2\n" +
+                "Subtraction, with - symbol: 2 - 1\n" +
+                "Multiplication, with * symbol: 3 * 4\n" +
+                "Division, with / symbol: 27 / 3\n" +
+                "Modulo, with % symbol: 13 % 3\n" +
+                "Exponentiation, with ^ symbol: 5^2 \n" +
+                "Nth Root, with √ symbol: 2 √ 9\n\n" + BNF, 
                 "Help Text", MessageBoxButton.OK);
         }
 
@@ -425,6 +434,24 @@ namespace Group_9_Project
             }
 
 
+        }
+
+        /// <summary>
+        /// Event <c>insert_root_symbol</c> inserts the root symbol.
+        /// </summary>
+        private void insert_root_symbol(object sender, RoutedEventArgs e)
+        {
+            ConsoleWriter symWriter = new ConsoleWriter(tbInput);
+            symWriter.Write("√");
+        }
+
+        /// <summary>
+        /// Event <c>insert_rational_symbol</c> inserts the rational symbol.
+        /// </summary>
+        private void insert_rational_symbol(object sender, RoutedEventArgs e)
+        {
+            ConsoleWriter symWriter = new ConsoleWriter(tbInput);
+            symWriter.Write("\\");
         }
     }
 }
