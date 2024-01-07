@@ -1,14 +1,4 @@
-## TODO for 1.1 
-- [x] Negative Numbers
-- [ ] Remainders (%)
-- [ ] Floating Point Numbers
-- [ ] Division By Zero Detection
+#  Maths Interpreter
+## Advanced Programming Project, Group 9
 
-- [ ] Syntax error detection (e.g. 5++4)
-
-## TODO for GUI (2.1)
-- [x] Basic GUI in WPF
-- [x] Add Plotting Lib
-- [ ] Functional Plotting
-- [x] Tie GUI Project (C#) into F# Project
-- [ ] Functional Error Detection
+Maths interpreter software composed of a lexer and parser (F#) and a GUI (C# WPF). Makes use of the [scottplot](https://scottplot.net) library to display basic linear equations in plotting mode. This software is capable of performing addition, subtraction, multiplication, division, modulo, and exponential operations. Integer, floating point and rational data types are supported. Variables are supported and are displayed in a GUI symbol table. Finally, the software can handle coefficient numbers on terms and respects the laws of precedence (BODMAS).
