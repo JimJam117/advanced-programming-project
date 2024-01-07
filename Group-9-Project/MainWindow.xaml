@@ -318,7 +318,8 @@
                             <TextBlock Name="tbOutput"  
                                        
                                          TextWrapping="Wrap" 
-                                         Text="Output will display here..." 
+                                         Text="Output will display here..."
+                                        FontSize="16"
                                          VerticalAlignment="Top" 
                                          HorizontalAlignment="Stretch"  
                                          Margin="0,0,0,0"

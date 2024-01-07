@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 
 using System.Windows;
@@ -30,10 +29,11 @@ namespace Group_9_Project
     /// </summary>
     public partial class MainWindow : Window
     {
+        // global lists
+        public Microsoft.FSharp.Collections.FSharpList<Tuple<string, lang.NumberType>> flist; // the fsharp version of the global list
+        public List<Tuple<string, lang.NumberType>> clist; // the csharp version of the global list
         
-
-        public Microsoft.FSharp.Collections.FSharpList<Tuple<string, lang.NumberType>> flist;
-        public List<Tuple<string, lang.NumberType>> clist;
+        // String version of the BNF
         public string BNF = "" +
             "BNF:\r\n<VA> ::= <varID> \"=\" <E>\r\n\r\n<E> ::= <T> <Eopt>" +
             "\r\n<Eopt> ::= \"+\" <T> <Eopt> | \"-\" <T> <Eopt> | <empty>\r\n\r\n<T> ::= <P> <Topt>\r\n" +
@@ -46,14 +46,19 @@ namespace Group_9_Project
 
             "<varID> ::= [a-z,A-Z]+ \r\n(* varVal is fetched from symbol table/list with key varID *)\r\n";
 
+        // Enum for application mode - either STANDARD or PLOTTING
         public enum CurrentMode {
             STANDARD = 1,
             PLOTTING = 2
          }
 
+        // Start in STANDARD mode
         public CurrentMode currentMode = CurrentMode.STANDARD;
+
+        // This is used to determine if linear function is (x = ay + b) or (y = ax + b)
         public bool Xfirst = true;
 
+        // ctor for main window - executed on startup
         public MainWindow()
         {
             InitializeComponent();
@@ -64,12 +69,11 @@ namespace Group_9_Project
             resetPlot();
         }
 
-        private void Execute_Reset_Symtable_Click(object sender, RoutedEventArgs e)
-        {
-            this.clist = new List<Tuple<string, lang.NumberType>>();
-            setDgSymList();
-        }
+        // ------------ HELPER FUNCTIONS--------------------
 
+        /// <summary>
+        /// Helper function <c>Execute_Reset_Symtable_Click</c> will clear the symbol table.
+        /// </summary>
         private void handleInterpreterExceptions(Exception exception) {
             if (exception.Message == "Lexer error")
             {
@@ -90,33 +94,35 @@ namespace Group_9_Project
             }
         }
 
+        /// <summary>
+        /// Helper function <c>setDgSymList</c> builds a list of symbols from the items in clist and then sets the data grid to this list.
+        /// </summary>
         private void setDgSymList() {
             var symlist = new List<symListItem>();
             foreach (var item in clist)
             {
-                var item1 = item.Item1;
-                var item2 = item.Item2;
-
-                if (item2.IsNT_INT)
+                if (item.Item2.IsINTEGER)
                 {
-                    int val = lang.NumberType.getIntValue(item2);
-                    symlist.Add(new symListItem(item.Item1, "Integer", item2.ToString()));
+                    int val = lang.NumberType.getIntValue(item.Item2);
+                    symlist.Add(new symListItem(item.Item1, "Integer", val.ToString()));
                 }
-                else if (item2.IsNT_RAT) {
-                    var val = lang.NumberType.getRatValue(item2);
-                    symlist.Add(new symListItem(item.Item1, "Rational", item2.ToString()));
+                else if (item.Item2.IsRATIONAL) {
+                    var val = lang.NumberType.getRatValue(item.Item2);
+                    symlist.Add(new symListItem(item.Item1, "Rational", val.Item1.ToString() + "\\" + val.Item2.ToString()));
                 }
+
                 else
                 {
-                    double val = lang.NumberType.getFloatValue(item2);
+                    double val = lang.NumberType.getFloatValue(item.Item2);
                     symlist.Add(new symListItem(item.Item1, "Floating Point", val.ToString()));
-                }
-
-                
+                }  
             }
             dgSymlist.ItemsSource = symlist;
         }
 
+        /// <summary>
+        /// Helper function <c>resetPlot</c> simply resets the plotting area.
+        /// </summary>
         private void resetPlot() {
             WpfPlot1.Plot.Clear();
             WpfPlot1.Plot.XAxis.SetBoundary(-100, 100);
@@ -127,6 +133,60 @@ namespace Group_9_Project
             WpfPlot1.Refresh();
         }
 
+        /// <summary>
+        /// Helper function <c>addSymLists</c> simply adds two sym lists together and returns the result.
+        /// </summary>
+        private List<Tuple<string, lang.NumberType>> addSymLists(List<Tuple<string, lang.NumberType>> inputList1, List<Tuple<string, lang.NumberType>> inputList2)
+        {
+            List<Tuple<string, lang.NumberType>> newList = inputList1;
+            foreach (var tuple in inputList2)
+            {
+                if (!newList.Exists(x => x.Item1 == tuple.Item1))
+                {
+                    newList.Add(tuple);
+                }
+                else
+                {
+                    newList.RemoveAll(x => x.Item1 == tuple.Item1);
+                    newList.Add(tuple);
+                }
+            }
+
+            return newList;
+        }
+
+        /// <summary>
+        /// Helper function <c>switchMode</c> will switch to the provided mode, toggling the relevant tabs over.
+        /// </summary>
+        private void switchMode(string str)
+        {
+            if (str != null)
+            {
+                switch (str)
+                {
+                    case "Standard":
+                        currentMode = CurrentMode.STANDARD;
+                        tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(0);
+                        tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(0);
+                        break;
+                    case "Plotting":
+                        currentMode = CurrentMode.PLOTTING;
+                        tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(1);
+                        tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(1);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        }
+
+
+        // ----------------------  EXECUTION FUNCTIONS ----------------------------
+
+        /// <summary>
+        /// Function <c>executePlot</c> will execute a standard operation.
+        /// </summary>
         private void executeStandard() {
             ConsoleWriter consoleWriter = new ConsoleWriter(tbErrOutput);
             Console.SetOut(consoleWriter);
@@ -154,29 +214,57 @@ namespace Group_9_Project
             }
         }
 
+        /// <summary>
+        /// Function <c>executePlot</c> will execute a plotting operation.
+        /// </summary>
+        private void executePlot() {
+            var constInput = tbConstInput.Text;
+            var coefInput = tbCoefInput.Text;
+            var xpoints = new List<double>();
+            var ypoints = new List<double>();
+
+            try {
+                // will calculate j for given i
+
+                // plotting points are between -100 and 100, which are the boundries for the plotting window
+                for (int i = -100; i < 100; i++) {
+                    // run graphing function for j
+                    var j = lang.graphingFunction(coefInput, constInput, i.ToString(), ListModule.OfSeq(clist));
+                    if (Xfirst) {
+                        xpoints.Add(i);
+                        ypoints.Add(j);
+                    }
+                    else {
+                        xpoints.Add(j);
+                        ypoints.Add(i);
+                    }
+                }
+
+                // print plot
+                WpfPlot1.Plot.AddScatter(xpoints.ToArray(), ypoints.ToArray());
+                WpfPlot1.Refresh();
+
+            }
+            catch (Exception exception) {
+                handleInterpreterExceptions(exception);
+            }
+        }
+
+
+
+        // EVENT HANDLERS
+
+        /// <summary>
+        /// Event <c>Execute_Button_Click</c> will execute a standard operation.
+        /// </summary>
         private void Execute_Button_Click(object sender, RoutedEventArgs e) {
                 executeStandard();
                 setDgSymList();
         }
 
-        private List<Tuple<string, lang.NumberType>> addSymLists(List<Tuple<string, lang.NumberType>> inputList1, List<Tuple<string, lang.NumberType>> inputList2) {
-            List<Tuple<string, lang.NumberType>> newList = inputList1;
-            foreach (var tuple in inputList2)
-            {
-                if (!newList.Exists(x => x.Item1 == tuple.Item1))
-                {
-                    newList.Add(tuple);
-                }
-                else { 
-                    newList.RemoveAll(x => x.Item1 == tuple.Item1);
-                    newList.Add(tuple);
-                }
-            }
-
-            return newList;
-        }
-
-
+        /// <summary>
+        /// Event <c>Clear_Button_Click</c> clears the input, output and debug console, as well as resetting the plotting display.
+        /// </summary>
         private void Clear_Button_Click(object sender, RoutedEventArgs e) {
             tbInput.Text = "";
             tbOutput.Text = "";
@@ -185,44 +273,48 @@ namespace Group_9_Project
             resetPlot();
         }
 
+        /// <summary>
+        /// Event <c>Quit_Button_Click</c> shuts down the application.
+        /// </summary>
         private void Quit_Button_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
         }
 
-        private void ToggleHelpMessage(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Event <c>Execute_Reset_Symtable_Click</c> will clear the symbol table.
+        /// </summary>
+        private void Execute_Reset_Symtable_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("This is the help text for our application. Here you will find the BNF and valid symbols to use in the query.\n\nNumber Types:\nThere are 3 number types in this application - integers, floats and rationals. Integers are represented by whole numbers, floating points represented by a number with a decimal place, and finally rational numbers uing the backslash in a fraction (i.e. 2 / 3 is simply 2 divided by 3 as integers, but 2\\3 represents 2 thirds as a rational number.)\n\n" + BNF, "Help Text", MessageBoxButton.OK);
+            this.clist = new List<Tuple<string, lang.NumberType>>();
+            setDgSymList();
         }
 
+        /// <summary>
+        /// Event <c>ToggleHelpMessage</c> displays a popup box with the help message, containing the BNF.
+        /// </summary>
+        private void ToggleHelpMessage(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("This is the help text for our application. Here you will find the BNF and " +
+                "valid symbols to use in the query.\n\nNumber Types:\nThere are 3 number types in this application " +
+                "- integers, floats and rationals. Integers are represented by whole numbers, floating points represented" +
+                " by a number with a decimal place, and finally rational numbers uing the backslash in a fraction (i.e. 2 / 3" +
+                " is simply 2 divided by 3 as integers, but 2\\3 represents 2 thirds as a rational number.)\n\n" + BNF, 
+                "Help Text", MessageBoxButton.OK);
+        }
+
+        /// <summary>
+        /// Event <c>ToggleHelpMessage</c> displays a popup box with the help message, containing the BNF.
+        /// </summary>
         private void tbInput_TextChanged(object sender, TextChangedEventArgs e)
          {
             tbInputPlaceholder.Visibility = tbInput.Text != "" ? Visibility.Hidden : Visibility.Visible;
         }
 
 
-        private void switchMode(string str) {
-            if (str != null)
-            {
-                switch (str)
-                {
-                    case "Standard":
-                        currentMode = CurrentMode.STANDARD;
-                        tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(0);
-                        tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(0);
-                        break;
-                    case "Plotting":
-                        currentMode = CurrentMode.PLOTTING;
-                        tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(1);
-                        tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(1);
-                        break;
-
-                    default:
-                        break;
-                }
-            }
-        }
-
+        /// <summary>
+        /// Event <c>TabControl_Output_SelectionChanged</c> changes the mode to the selected one on the output tab change.
+        /// </summary>
         private void TabControl_Output_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var header = ((TabItem)tcOutputTabs.SelectedItem).Header;
@@ -233,6 +325,9 @@ namespace Group_9_Project
             }
         }
 
+        /// <summary>
+        /// Event <c>TabControl_Input_SelectionChanged</c> changes the mode to the selected one on the input tab change.
+        /// </summary>
         private void TabControl_Input_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var header = ((TabItem)tcInputTabs.SelectedItem).Header;
@@ -243,6 +338,9 @@ namespace Group_9_Project
             }
         }
 
+        /// <summary>
+        /// Event <c>Button_Switch_Xy_Click</c> switches the X and Y around in the linear function input area.
+        /// </summary>
         private void Button_Switch_Xy_Click(object sender, RoutedEventArgs e)
         {
             Xfirst = !Xfirst;
@@ -256,60 +354,37 @@ namespace Group_9_Project
             }
         }
 
+        /// <summary>
+        /// Event <c>Button_Execute_Plot_Click</c> executes a plotting operation.
+        /// </summary>
         private void Button_Execute_Plot_Click(object sender, RoutedEventArgs e)
         {
-            var constInput = tbConstInput.Text;
-            var coefInput = tbCoefInput.Text;
-            var xpoints = new List<double>();
-            var ypoints = new List<double>();
-
-
-            try
-            {
-                for (int i = -100; i < 100; i++)
-                {
-                    var j = lang.graphingFunction(coefInput, constInput, i.ToString(), ListModule.OfSeq(clist));
-                    if (Xfirst)
-                    {
-                        xpoints.Add(i);
-                        ypoints.Add(j);
-                    }
-                    else
-                    {
-                        xpoints.Add(j);
-                        ypoints.Add(i);
-                    }
-                }
-
-                WpfPlot1.Plot.AddScatter(xpoints.ToArray(), ypoints.ToArray());
-                WpfPlot1.Refresh();
-
-            }
-            catch (Exception exception)
-            {
-                handleInterpreterExceptions(exception);
-            }
-
-
-
-
-
+            executePlot();
+            setDgSymList();
         }
 
+        /// <summary>
+        /// Event <c>Execute_Run_Tests_Click</c> runs the predefined F# unit tests, and displays the result in a popup.
+        /// </summary>
         private void Execute_Run_Tests_Click(object sender, RoutedEventArgs e)
         {
             ConsoleWriter consoleWriter = new ConsoleWriter(tbErrOutput);
             Console.SetOut(consoleWriter);
 
+            // test result
             var res = lang.runTests;
 
+            // counts
             int passcount = 0;
             int totalcount = 0;
+
+            // lists of outputs
             List<string> failureMsgs = new List<string>();
             List<string> allMsgs = new List<string>();
 
             foreach (var item in res)
             {
+                // if the pass/fail bool is true
                 if (item.Item2)
                 {
                     passcount++;
@@ -318,27 +393,34 @@ namespace Group_9_Project
                     failureMsgs.Add(item.Item1);
                 }
 
+                // increment count and add message to list
                 totalcount++;
                 allMsgs.Add(item.Item1);
             }
 
+            // if there are failures
             if (passcount < totalcount)
             {
+                // create a string of all failure messages
                 string msg = "";
                 foreach (var item in failureMsgs)
                 {
                     msg += item + "\n";
                 }
 
+                // popup output
                 MessageBox.Show("Not all tests passed.\n" + msg, "Test Results: " + passcount + "/" + totalcount + " passed", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             else {
+
+                // create condensed list of all pass messages
                 string msg = "";
                 foreach (var item in allMsgs)
                 {
                     msg += "  (" + item + ")  ";
                 }
 
+                // popup output
                 MessageBox.Show("All tests passed. (" + passcount + "/" + totalcount + ")\n\n Raw Test Output:\n" + msg, "Test Results: " + passcount + "/" + totalcount + " passed", MessageBoxButton.OK, MessageBoxImage.Asterisk);
             }
 
