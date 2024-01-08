@@ -49,8 +49,12 @@ namespace Group_9_Project
         // Enum for application mode - either STANDARD or PLOTTING
         public enum CurrentMode {
             STANDARD = 1,
-            PLOTTING = 2
-         }
+            LINEAR = 2,
+            QUADRATIC = 3,
+            CUBIC = 4,
+            CONSTANT = 5
+        }
+
 
         // Start in STANDARD mode
         public CurrentMode currentMode = CurrentMode.STANDARD;
@@ -162,6 +166,7 @@ namespace Group_9_Project
         {
             if (str != null)
             {
+                switchXy();
                 switch (str)
                 {
                     case "Standard":
@@ -169,15 +174,61 @@ namespace Group_9_Project
                         tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(0);
                         tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(0);
                         break;
-                    case "Plotting":
-                        currentMode = CurrentMode.PLOTTING;
+                    case "Linear":
+                        currentMode = CurrentMode.LINEAR;
                         tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(1);
                         tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(1);
                         break;
-
+                    case "Quadratic":
+                        currentMode = CurrentMode.QUADRATIC;
+                        tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(1);
+                        tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(2);
+                        break;
+                    case "Cubic":
+                        currentMode = CurrentMode.CUBIC;
+                        tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(1);
+                        tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(3);
+                        break;
+                    case "Constant":
+                        currentMode = CurrentMode.CONSTANT;
+                        tcOutputTabs.SelectedItem = tcOutputTabs.Items.GetItemAt(1);
+                        tcInputTabs.SelectedItem = tcInputTabs.Items.GetItemAt(4);
+                        break;
                     default:
                         break;
                 }
+            }
+        }
+
+        private void switchXy() {
+            if (Xfirst)
+            {
+                // Linear
+                tbXyEquals.Text = "X = (";
+                tbXy.Text = ") Y + (";
+
+                // Quadratic
+                tbXyEquals_quadratic.Text = " X = (";
+                tbXy1_quadratic.Text = ") Y  +";
+                tbXy2_quadratic.Text = ") Y + (";
+
+
+                // Constant
+                tbXyEquals_constant.Text = "X = (";
+            }
+            else
+            {
+                // Linear
+                tbXyEquals.Text = "Y = (";
+                tbXy.Text = ") X + (";
+
+                // Quadratic
+                tbXyEquals_quadratic.Text = " Y = (";
+                tbXy1_quadratic.Text = ") X  +";
+                tbXy2_quadratic.Text = ") X + (";
+
+                // Constant
+                tbXyEquals_constant.Text = "Y = (";
             }
         }
 
@@ -185,7 +236,7 @@ namespace Group_9_Project
         // ----------------------  EXECUTION FUNCTIONS ----------------------------
 
         /// <summary>
-        /// Function <c>executePlot</c> will execute a standard operation.
+        /// Function <c>executeStandard</c> will execute a standard operation.
         /// </summary>
         private void executeStandard() {
             ConsoleWriter consoleWriter = new ConsoleWriter(tbErrOutput);
@@ -218,8 +269,6 @@ namespace Group_9_Project
         /// Function <c>executePlot</c> will execute a plotting operation.
         /// </summary>
         private void executePlot() {
-            var constInput = tbConstInput.Text;
-            var coefInput = tbCoefInput.Text;
             var xpoints = new List<double>();
             var ypoints = new List<double>();
 
@@ -229,7 +278,26 @@ namespace Group_9_Project
                 // plotting points are between -100 and 100, which are the boundries for the plotting window
                 for (int i = -100; i < 100; i++) {
                     // run graphing function for j
-                    var j = lang.graphingFunction(coefInput, constInput, i.ToString(), ListModule.OfSeq(clist));
+                    double j = i;
+                    switch (currentMode)
+                    {
+                        case CurrentMode.LINEAR:
+                            var constInput = tbConstInput.Text;
+                            var coefInput = tbCoefInput.Text;
+                            j = lang.graphingFunction(coefInput, constInput, i.ToString(), ListModule.OfSeq(clist)); 
+                            break;
+                        case CurrentMode.QUADRATIC:
+                            var constQInput = tbConstInput_quadratic.Text;
+                            var coefQ1Input = tbCoef1Input_quadratic.Text;
+                            var coefQ2Input = tbCoef2Input_quadratic.Text;
+                            j = lang.graphingFunctionQuadratic(i.ToString(), coefQ1Input, coefQ2Input, constQInput, ListModule.OfSeq(clist));
+                            break;
+                        //case CurrentMode.CONSTANT:
+                         //   j = lang.graphingFunction(coefInput, constInput, i.ToString(), ListModule.OfSeq(clist));
+                          //  break;
+                        default:
+                            break;
+                    }
                     if (Xfirst) {
                         xpoints.Add(i);
                         ypoints.Add(j);
@@ -328,6 +396,7 @@ namespace Group_9_Project
         {
             var header = ((TabItem)tcOutputTabs.SelectedItem).Header;
             string headerString = header.ToString() ?? "Standard";
+            if (headerString != "Standard") { headerString = "Linear"; }
             if (header != null)
             {
                 switchMode(str: headerString);
@@ -353,14 +422,7 @@ namespace Group_9_Project
         private void Button_Switch_Xy_Click(object sender, RoutedEventArgs e)
         {
             Xfirst = !Xfirst;
-            if (Xfirst) { 
-                tbXyEquals.Text = "X = (";
-                tbXy.Text = ") Y + (";
-            }
-            else {
-                tbXyEquals.Text = "Y = (";
-                tbXy.Text = ") X + (";
-            }
+            switchXy();
         }
 
         /// <summary>

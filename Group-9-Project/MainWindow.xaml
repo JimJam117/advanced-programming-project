@@ -161,7 +161,7 @@
                 </Grid>
                             
                         </TabItem>
-                        <TabItem Header="Plotting">
+                        <TabItem Header="Linear">
                             <Grid Margin="10">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="20"></RowDefinition>
@@ -274,6 +274,239 @@
                             </Grid>
 
                         </TabItem>
+
+                        <!-- Quadratic -->
+                        <TabItem Header="Quadratic">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="20"></RowDefinition>
+                                    <RowDefinition></RowDefinition>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" 
+                                   FontWeight="Bold" 
+                                   Text="Quadratic Equation:">
+                                </TextBlock>
+
+
+                                <Grid Grid.Row="1">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="40"></RowDefinition>
+                                        <RowDefinition></RowDefinition>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- plotting input -->
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="40"></ColumnDefinition>
+                                            <ColumnDefinition></ColumnDefinition>
+                                            <ColumnDefinition Width="45"></ColumnDefinition>
+                                            <ColumnDefinition></ColumnDefinition>
+                                            <ColumnDefinition Width="40"></ColumnDefinition>
+                                            <ColumnDefinition></ColumnDefinition>
+                                            <ColumnDefinition Width="10"></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" 
+                                           FontWeight="Bold" 
+                                           Text=" X = ("
+                                           FontSize="14"
+                                           Name="tbXyEquals_quadratic">
+                                        </TextBlock>
+
+                                        <TextBox 
+                                            Grid.Column="1"
+                                            Name="tbCoef1Input_quadratic" 
+                                            TextWrapping="NoWrap" 
+                                            MaxLength="45" 
+                                            Text="" 
+                                            VerticalAlignment="Top" 
+                                            Height="28"
+                                            Width="60"
+                                            VerticalContentAlignment="Center"
+                                            />
+
+                                        <TextBlock Grid.Column="2" 
+                                           FontWeight="Bold" 
+                                           Text=") Y  +"
+                                           FontSize="14"
+                                           Name="tbXy1_quadratic">
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="2" 
+                                           FontWeight="Bold" 
+                                           Text="2        "
+                                           FontSize="9"
+                                           HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="2" 
+                                           FontWeight="Bold" 
+                                           Text="("
+                                           FontSize="14"
+                                           HorizontalAlignment="Right">
+                                        </TextBlock>
+
+
+                                        <TextBox 
+                                            Grid.Column="3"
+                                            Name="tbCoef2Input_quadratic" 
+                                            TextWrapping="NoWrap" 
+                                            MaxLength="45" 
+                                            Text="" 
+                                            VerticalAlignment="Top" 
+                                            Height="28"
+                                            Width="60"
+                                            VerticalContentAlignment="Center"
+                                            />
+
+
+                                        <TextBlock Grid.Column="4" 
+                                           FontWeight="Bold" 
+                                           Text=") Y + ("
+                                           FontSize="14"
+                                           Name="tbXy2_quadratic">
+                                        </TextBlock>
+
+                                        <TextBox 
+                                            Grid.Column="5"
+                                            Name="tbConstInput_quadratic" 
+                                            TextWrapping="NoWrap" 
+                                            MaxLength="45" 
+                                            Text="" 
+                                            VerticalAlignment="Top" 
+                                            Height="28"
+                                            Width="60"
+                                            VerticalContentAlignment="Center"
+                                            />
+
+                                        <TextBlock Grid.Column="6" 
+                                           FontWeight="Bold" 
+                                           Text=")"
+                                           FontSize="14"
+                                           >
+                                        </TextBlock>
+
+                                    </Grid>
+
+
+                                    <!-- plotting input controls -->
+                                    <Grid Grid.Row="1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition></ColumnDefinition>
+                                            <ColumnDefinition></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button 
+                                        Grid.Column="1"
+                                        Content="Execute" 
+                                        HorizontalAlignment="Right" 
+                                        Margin="0,0,0,0" 
+                                        VerticalAlignment="Top" 
+                                        Height="35" Width="84" 
+                                        Click="Button_Execute_Plot_Click"/>
+
+                                        <Button 
+                                        Grid.Column="0"
+                                        Content="Switch X/Y" 
+                                        HorizontalAlignment="Right" 
+                                        Margin="0,0,0,0" 
+                                        VerticalAlignment="Top" 
+                                        Height="35" Width="84" 
+                                        Click="Button_Switch_Xy_Click"/>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+
+                        </TabItem>
+
+                        <!-- Constant -->
+                        <TabItem Header="Constant">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="20"></RowDefinition>
+                                    <RowDefinition></RowDefinition>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" 
+                                   FontWeight="Bold" 
+                                   Text="Constant Equation:">
+                                </TextBlock>
+
+
+                                <Grid Grid.Row="1">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="40"></RowDefinition>
+                                        <RowDefinition></RowDefinition>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- plotting input -->
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="40"></ColumnDefinition>
+                                            <ColumnDefinition></ColumnDefinition>
+                                            <ColumnDefinition Width="100"></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" 
+                                           FontWeight="Bold" 
+                                           Text="X = ("
+                                           FontSize="14"
+                                           Name="tbXyEquals_constant">
+                                        </TextBlock>
+
+
+                                        <TextBox 
+                                            Grid.Column="1"
+                                            Name="tbConstInput_constant" 
+                                            TextWrapping="NoWrap" 
+                                            MaxLength="45" 
+                                            Text="" 
+                                            VerticalAlignment="Top" 
+                                            Height="28"
+                                            Width="180"
+                                            VerticalContentAlignment="Center"
+                                            />
+
+                                        <TextBlock Grid.Column="4" 
+                                           FontWeight="Bold" 
+                                           Text=" )"
+                                           FontSize="14"
+                                           >
+                                        </TextBlock>
+
+                                    </Grid>
+
+
+                                    <!-- plotting input controls -->
+                                    <Grid Grid.Row="1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition></ColumnDefinition>
+                                            <ColumnDefinition></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button 
+                                        Grid.Column="1"
+                                        Content="Execute" 
+                                        HorizontalAlignment="Right" 
+                                        Margin="0,0,0,0" 
+                                        VerticalAlignment="Top" 
+                                        Height="35" Width="84" 
+                                        Click="Button_Execute_Plot_Click"/>
+
+                                        <Button 
+                                        Grid.Column="0"
+                                        Content="Switch X/Y" 
+                                        HorizontalAlignment="Right" 
+                                        Margin="0,0,0,0" 
+                                        VerticalAlignment="Top" 
+                                        Height="35" Width="84" 
+                                        Click="Button_Switch_Xy_Click"/>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+
+                        </TabItem>
+
+
                     </TabControl>
 
 

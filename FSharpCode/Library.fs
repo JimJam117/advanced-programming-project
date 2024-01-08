@@ -16,6 +16,7 @@ module lang =
     let denomZeroError = System.Exception("Denominator of a rational cannot be zero!")
     let symError = System.Exception("No value associated to variable name")
     let linearError = System.Exception("The coefficient cannot be 0.")
+    let cubicError = System.Exception("The coefficient of the cubic term cannot be 0.")
     let outOfBoundsError = System.Exception("A value has gone out of bounds.")
 
     // reducing rationals helper funcs
@@ -40,8 +41,6 @@ module lang =
                     int x, int n
                 else
                     loop (n + 1.)
-        
-
         loop 1.
 
     // reduce to simplest form
@@ -710,6 +709,24 @@ module lang =
         else
             ((fc - fb) / fa)
 
+    let public graphingFunctionQuadratic (i:string) (a:string) (b:string) (c:string) (symTList:List<string*NumberType>) = 
+        
+        let ga = solveGequation(a, true, true, symTList, INTEGER 0)
+        let gb = solveGequation(b, true, true, symTList, INTEGER 0)
+        let gc = solveGequation(c, true, true, symTList, INTEGER 0)
+    
+        let fi = float i
+        let fa = float (fst ga)
+        let fb = float (fst gb)
+        let fc = float (fst gc) - fi
+
+        let discriminant = fb**2.0 - 4.0*fa*fc
+        if discriminant < 0. then
+            0.
+        else
+            -fb + sqrt discriminant / 2.0*fa
+
+   
     // run a standard test
     let runStandardTest (input:string) (expectedOutputString:string) (inputSymTList:List<string*NumberType>) (expectedSymTList:List<string*NumberType>): string*Boolean =
         let res = solveGequation(input, true, false, inputSymTList, INTEGER 0)
